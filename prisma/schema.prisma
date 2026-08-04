@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum WaterType {
+  FRESHWATER
+  SALTWATER
+  BRACKISH
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  NEEDS_REVIEW
+}
+
+enum FishingMode {
+  SHORE
+  BOAT
+  RIVER
+  RESERVOIR
+  LAKE
+  BEACH
+  PORT
+  OTHER
+}
+
+enum CatchDisposition {
+  RELEASED
+  KEPT
+}
+
+model User {
+  id             String         @id @default(cuid())
+  username       String         @unique
+  displayName    String
+  passwordHash   String
+  role           Role           @default(MEMBER)
+  active         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  sessions       Session[]
+  catches        Catch[]        @relation("FisherCatches")
+  createdCatches Catch[]        @relation("CreatedCatches")
+  places         FishingPlace[]
+  avatarImageId  String?        @unique
+  avatarImage    StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Species {
+  id                    String             @id @default(cuid())
+  slug                  String             @unique
+  commonName            String
+  scientificName        String
+  alternateNames        String[]           @default([])
+  waterType             WaterType
+  description           String?
+  curiosities           String?
+  habitat               String?
+  granadaDistribution   String?
+  usualSizeCm           Decimal?           @db.Decimal(7, 2)
+  documentedMaxSizeCm   Decimal?           @db.Decimal(7, 2)
+  usualWeightG          Decimal?           @db.Decimal(10, 2)
+  activeMonths          Int[]              @default([])
+  activityTimes         String[]           @default([])
+  usualDepth            String?
+  difficulty            Int?
+  techniques            String[]           @default([])
+  baits                 String[]           @default([])
+  conservationStatus    String?
+  legalStatus           String?
+  closedSeasonNotes     String?
+  invasiveNotes         String?
+  biologicalSeasonNotes String?
+  illustrationPath      String?
+  silhouettePath        String?
+  verificationStatus    VerificationStatus @default(PENDING)
+  reviewedAt            DateTime?
+  archivedAt            DateTime?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  sources               SpeciesSource[]
+  catches               Catch[]
+  catalogImageId        String?            @unique
+  detailImageId         String?            @unique
+  catalogImage          StoredImage?       @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
+  detailImage           StoredImage?       @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
+
+  @@index([waterType, archivedAt])
+  @@index([commonName])
+  @@index([scientificName])
+}
+
+model StoredImage {
+  id             String        @id @default(cuid())
+  originalPath   String
+  webPath        String
+  thumbnailPath  String
+  mimeType       String
+  width          Int
+  height         Int
+  sizeBytes      Int
+  createdAt      DateTime      @default(now())
+  userAvatar     User?         @relation("UserAvatar")
+  speciesCatalog Species?      @relation("SpeciesCatalogImage")
+  speciesDetail  Species?      @relation("SpeciesDetailImage")
+  placeImage     FishingPlace? @relation("PlaceImage")
+}
+
+model SpeciesSource {
+  id           String   @id @default(cuid())
+  speciesId    String
+  title        String
+  organization String?
+  url          String
+  scope        String?
+  accessedAt   DateTime
+  species      Species  @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+
+  @@index([speciesId])
+}
+
+model FishingPlace {
+  id           String       @id @default(cuid())
+  name         String
+  latitude     Decimal      @db.Decimal(9, 6)
+  longitude    Decimal      @db.Decimal(9, 6)
+  waterType    WaterType
+  description  String?
+  createdById  String
+  placeImageId String?      @unique
+  archivedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  createdBy    User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  placeImage   StoredImage? @relation("PlaceImage", fields: [placeImageId], references: [id], onDelete: SetNull)
+  catches      Catch[]
+
+  @@index([waterType, archivedAt])
+  @@index([latitude, longitude])
+}
+
+model Catch {
+  id             String           @id @default(cuid())
+  idempotencyKey String           @unique
+  speciesId      String
+  fisherId       String
+  createdById    String
+  placeId        String
+  caughtAt       DateTime
+  timeKnown      Boolean          @default(true)
+  lengthCm       Decimal          @db.Decimal(7, 2)
+  weightG        Decimal?         @db.Decimal(10, 2)
+  techniqueId    String?
+  baitOrLureId   String?
+  mode           FishingMode
+  disposition    CatchDisposition
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  species        Species          @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+  fisher         User             @relation("FisherCatches", fields: [fisherId], references: [id], onDelete: Restrict)
+  createdBy      User             @relation("CreatedCatches", fields: [createdById], references: [id], onDelete: Restrict)
+  place          FishingPlace     @relation(fields: [placeId], references: [id], onDelete: Restrict)
+  technique      Technique?       @relation(fields: [techniqueId], references: [id], onDelete: SetNull)
+  baitOrLure     BaitOrLure?      @relation(fields: [baitOrLureId], references: [id], onDelete: SetNull)
+  photos         CatchPhoto[]
+
+  @@index([fisherId, caughtAt])
+  @@index([speciesId, fisherId, deletedAt])
+  @@index([placeId, caughtAt])
+}
+
+model CatchPhoto {
+  id            String   @id @default(cuid())
+  catchId       String
+  originalPath  String
+  webPath       String
+  thumbnailPath String
+  mimeType      String
+  width         Int
+  height        Int
+  sizeBytes     Int
+  isPrimary     Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  catch         Catch    @relation(fields: [catchId], references: [id], onDelete: Cascade)
+
+  @@index([catchId, sortOrder])
+}
+
+model Technique {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  active  Boolean @default(true)
+  catches Catch[]
+}
+
+model BaitOrLure {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  active  Boolean @default(true)
+  catches Catch[]
+}
