@@ -67,12 +67,14 @@ export default async function Stats() {
           background: "linear-gradient(145deg,#f0faed,#dff3df)",
         }}
       >
-        <p style={{ margin: 0, textTransform: "capitalize" }}>
-          Actividad biológica · {monthName}
-        </p>
-        <h2 className="stats-section-title" style={{ marginTop: 6 }}>
+        <h2 className="stats-section-title" style={{ margin: 0 }}>
           Especies de mayor actividad actualmente
         </h2>
+        <p
+          style={{ margin: "6px 0 0", textTransform: "capitalize" }}
+        >
+          Actividad biológica · {monthName}
+        </p>
         {seasonalSpecies.length ? (
           <div
             style={{
