@@ -70,7 +70,7 @@ export default async function Stats() {
         <p style={{ margin: 0, textTransform: "capitalize" }}>
           Actividad biológica · {monthName}
         </p>
-        <h2 style={{ marginTop: 6 }}>
+        <h2 className="stats-section-title" style={{ marginTop: 6 }}>
           Especies de mayor actividad actualmente
         </h2>
         {seasonalSpecies.length ? (
@@ -143,7 +143,7 @@ export default async function Stats() {
           </section>
         ))}
       </div>
-      <h2>Pescadores</h2>
+      <h2 className="stats-section-title">Pescadores</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
         {users.map((user) => (
           <Link
@@ -156,7 +156,7 @@ export default async function Stats() {
           </Link>
         ))}
       </div>
-      <h2>Récords conjuntos</h2>
+      <h2 className="stats-section-title">Récords conjuntos</h2>
       <p>
         Longitud:{" "}
         {longest
@@ -169,7 +169,7 @@ export default async function Stats() {
           ? `${Number(heaviest.weightG)} g · ${heaviest.species.commonName} (${heaviest.fisher.displayName})`
           : "—"}
       </p>
-      <h2>Capturas por mes</h2>
+      <h2 className="stats-section-title">Capturas por mes</h2>
       <div
         style={{
           display: "grid",
@@ -193,7 +193,7 @@ export default async function Stats() {
           </div>
         ))}
       </div>
-      <h2>Lugares con más capturas</h2>
+      <h2 className="stats-section-title">Lugares con más capturas</h2>
       {places
         .sort((a, b) => b._count.catches - a._count.catches)
         .slice(0, 5)

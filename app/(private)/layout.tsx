@@ -18,9 +18,8 @@ export default async function PrivateLayout({
         style={{ background: "#dff3df", borderBottom: "1px solid #c6dec9" }}
       >
         <div
-          className="shell"
+          className="shell header-shell"
           style={{
-            paddingBottom: "1rem",
             display: "flex",
             alignItems: "center",
             gap: "1rem",
@@ -28,9 +27,17 @@ export default async function PrivateLayout({
         >
           <Link
             href="/"
-            style={{ fontSize: "1.3rem", fontWeight: 850, marginRight: "auto" }}
+            className="brand-link"
+            aria-label="Pescamigos · Ir al catálogo"
           >
-            🐟 Pescamigos
+            <Image
+              className="brand-logo"
+              src="/pescamigos-logo.png"
+              alt="Pescamigos"
+              width={888}
+              height={393}
+              priority
+            />
           </Link>
           <Link
             href={`/pescadores/${user.id}`}

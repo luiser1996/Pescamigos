@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -16,9 +17,15 @@ export default async function Login({
   return (
     <main className="shell" style={{ maxWidth: 480, paddingTop: "10vh" }}>
       <section className="card" style={{ padding: "2rem" }}>
-        <div style={{ fontSize: "3rem" }}>🐟</div>
+        <Image
+          className="login-logo"
+          src="/pescamigos-logo.png"
+          alt="Pescamigos"
+          width={888}
+          height={393}
+          priority
+        />
         <h1 style={{ fontSize: "2.2rem", margin: 0 }}>Qué alegría verte</h1>
-        <p>Entra a vuestro cuaderno de pesca.</p>
         {error && (
           <p role="alert" style={{ color: "#9b2c2c" }}>
             {error}
