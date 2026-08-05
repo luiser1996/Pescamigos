@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pescamigos_e2e
+          POSTGRES_USER: pescamigos
+          POSTGRES_PASSWORD: pescamigos_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pescamigos -d pescamigos_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      E2E_DATABASE_URL: postgresql://pescamigos:pescamigos_e2e@127.0.0.1:5432/pescamigos_e2e?schema=public
+      DATABASE_URL: postgresql://pescamigos:pescamigos_e2e@127.0.0.1:5432/pescamigos_e2e?schema=public
+      LOGIN_RATE_LIMIT_SECRET: ci-only-rate-limit-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - name: Auditoría de dependencias de producción
+        run: npm audit --omit=dev
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

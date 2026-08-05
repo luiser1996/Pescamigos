@@ -4,29 +4,72 @@ import path from "node:path";
 import sharp from "sharp";
 
 const root =
-  process.env.PHOTO_STORAGE_PATH ?? path.join(process.cwd(), "storage");
-export async function savePhoto(file: File) {
-  const max = (Number(process.env.MAX_UPLOAD_MB) || 12) * 1024 * 1024;
-  if (file.size > max) throw new Error("La foto supera el tamaño permitido");
+  process.env.PHOTO_STORAGE_PATH ??
+  path.join(/* turbopackIgnore: true */ process.cwd(), "storage");
+const maxBytes = () => (Number(process.env.MAX_UPLOAD_MB) || 12) * 1024 * 1024;
+const maxWidth = () => Number(process.env.MAX_IMAGE_WIDTH) || 12000;
+const maxHeight = () => Number(process.env.MAX_IMAGE_HEIGHT) || 12000;
+const maxPixels = () => Number(process.env.MAX_IMAGE_PIXELS) || 60_000_000;
+
+function trustedImageFormat(input: Buffer) {
+  if (
+    input.length >= 3 &&
+    input[0] === 0xff &&
+    input[1] === 0xd8 &&
+    input[2] === 0xff
+  )
+    return "jpeg";
+  if (
+    input.length >= 8 &&
+    input.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  )
+    return "png";
+  if (
+    input.length >= 12 &&
+    input.subarray(0, 4).toString("ascii") === "RIFF" &&
+    input.subarray(8, 12).toString("ascii") === "WEBP"
+  )
+    return "webp";
+  throw new Error("Usa una imagen JPEG, PNG o WebP válida");
+}
+
+async function inspectImage(file: File) {
+  if (file.size === 0 || file.size > maxBytes())
+    throw new Error("La foto supera el tamaño permitido");
   const input = Buffer.from(await file.arrayBuffer());
-  const meta = await sharp(input)
+  const signature = trustedImageFormat(input);
+  const meta = await sharp(input, {
+    failOn: "error",
+    limitInputPixels: maxPixels(),
+    animated: false,
+  })
     .metadata()
     .catch(() => null);
-  if (!meta || !["jpeg", "png", "webp"].includes(meta.format ?? ""))
-    throw new Error(
-      "Usa una imagen JPEG, PNG o WebP válida. HEIC no está disponible en este contenedor.",
-    );
+  if (!meta || meta.format !== signature || !meta.width || !meta.height)
+    throw new Error("Usa una imagen JPEG, PNG o WebP válida");
+  if (
+    meta.width > maxWidth() ||
+    meta.height > maxHeight() ||
+    meta.width * meta.height > maxPixels()
+  )
+    throw new Error("La imagen supera las dimensiones permitidas");
+  return { input, meta };
+}
+
+export async function savePhoto(file: File) {
+  const { input, meta } = await inspectImage(file);
   const id = randomUUID();
-  const temp = path.join(root, "tmp", id);
-  const final = path.join(root, id.slice(0, 2));
+  const temp = path.join(/* turbopackIgnore: true */ root, "tmp", id);
+  const final = path.join(/* turbopackIgnore: true */ root, id.slice(0, 2));
   await mkdir(temp, { recursive: true });
   await mkdir(final, { recursive: true });
+  const moved: string[] = [];
   try {
     const original = path.join(temp, `${id}.original`);
     const web = path.join(temp, `${id}.webp`);
     const thumb = path.join(temp, `${id}.thumb.webp`);
     await writeFile(original, input);
-    await sharp(input)
+    await sharp(input, { failOn: "error", limitInputPixels: maxPixels() })
       .rotate()
       .resize({
         width: 1600,
@@ -36,15 +79,17 @@ export async function savePhoto(file: File) {
       })
       .webp({ quality: 82 })
       .toFile(web);
-    await sharp(input)
+    await sharp(input, { failOn: "error", limitInputPixels: maxPixels() })
       .rotate()
       .resize(420, 300, { fit: "cover" })
       .webp({ quality: 76 })
       .toFile(thumb);
     const names = [original, web, thumb];
-    const moved = [] as string[];
     for (const name of names) {
-      const target = path.join(final, path.basename(name));
+      const target = path.join(
+        /* turbopackIgnore: true */ final,
+        path.basename(name),
+      );
       await rename(name, target);
       moved.push(target);
     }
@@ -60,13 +105,18 @@ export async function savePhoto(file: File) {
     };
   } catch (error) {
     await rm(temp, { recursive: true, force: true });
+    await Promise.all(moved.map((target) => rm(target, { force: true })));
     throw error;
   }
 }
 export async function removeSavedPhoto(paths: string[]) {
   for (const target of paths) {
     const resolved = path.resolve(target);
-    if (resolved.startsWith(path.resolve(root) + path.sep))
+    if (
+      resolved.startsWith(
+        path.resolve(/* turbopackIgnore: true */ root) + path.sep,
+      )
+    )
       await rm(resolved, { force: true });
   }
 }
@@ -80,10 +130,12 @@ async function saveCroppedImage(
   zoom: number,
   aspect: number,
 ) {
-  const max = (Number(process.env.MAX_UPLOAD_MB) || 12) * 1024 * 1024;
-  if (file.size > max) throw new Error("La foto supera el tamaño permitido");
-  const input = Buffer.from(await file.arrayBuffer());
-  const rotated = await sharp(input)
+  const { input } = await inspectImage(file);
+  const rotated = await sharp(input, {
+    failOn: "error",
+    limitInputPixels: maxPixels(),
+    animated: false,
+  })
     .rotate()
     .toBuffer({ resolveWithObject: true })
     .catch(() => null);
@@ -106,13 +158,14 @@ async function saveCroppedImage(
       100,
   );
   const id = randomUUID();
-  const temp = path.join(root, "tmp", id);
-  const final = path.join(root, id.slice(0, 2));
+  const temp = path.join(/* turbopackIgnore: true */ root, "tmp", id);
+  const final = path.join(/* turbopackIgnore: true */ root, id.slice(0, 2));
   await mkdir(temp, { recursive: true });
   await mkdir(final, { recursive: true });
   const original = path.join(temp, `${id}.original`),
     web = path.join(temp, `${id}.webp`),
     thumb = path.join(temp, `${id}.thumb.webp`);
+  const moved: string[] = [];
   try {
     await writeFile(original, input);
     const cropped = sharp(rotated.data).extract({
@@ -129,9 +182,11 @@ async function saveCroppedImage(
       .webp({ quality: 84 })
       .toFile(web);
     await cropped.clone().resize(220, 220).webp({ quality: 78 }).toFile(thumb);
-    const moved = [] as string[];
     for (const name of [original, web, thumb]) {
-      const target = path.join(final, path.basename(name));
+      const target = path.join(
+        /* turbopackIgnore: true */ final,
+        path.basename(name),
+      );
       await rename(name, target);
       moved.push(target);
     }
@@ -147,6 +202,7 @@ async function saveCroppedImage(
     };
   } catch (error) {
     await rm(temp, { recursive: true, force: true });
+    await Promise.all(moved.map((target) => rm(target, { force: true })));
     throw error;
   }
 }

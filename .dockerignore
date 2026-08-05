@@ -7,6 +7,7 @@ playwright-report
 test-results
 .env
 storage
+storage-e2e
 backups
 *.log
 *.tsbuildinfo

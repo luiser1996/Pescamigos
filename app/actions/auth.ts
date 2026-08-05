@@ -5,36 +5,36 @@ import { headers } from "next/headers";
 import { createSession, hashPassword, logout, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { credentialsSchema } from "@/lib/validation";
+import {
+  clearLoginThrottle,
+  registerLoginAttempt,
+} from "@/lib/login-rate-limit";
 
-const attempts = new Map<string, { count: number; reset: number }>();
-function allowed(key: string) {
-  const now = Date.now();
-  const value = attempts.get(key);
-  if (!value || value.reset < now) {
-    attempts.set(key, { count: 1, reset: now + 15 * 60_000 });
-    return true;
-  }
-  if (value.count >= 8) return false;
-  value.count++;
-  return true;
-}
+const dummyPasswordHash =
+  "$argon2id$v=19$m=19456,p=1,t=2$WeZXymGqaFPOFt1shRSb1g$nNudh98+FGxp14wDqlio97q5EoQ9b5kzU7ifdNMdJNo";
 
 export async function loginAction(formData: FormData) {
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0] ?? "local";
-  if (!allowed(ip))
+  const requestHeaders = await headers();
+  const forwarded = requestHeaders.get("x-forwarded-for")?.split(",");
+  const ip =
+    requestHeaders.get("x-real-ip") ?? forwarded?.at(-1)?.trim() ?? "local";
+  const rawCredentials = Object.fromEntries(formData);
+  const rawUsername = String(rawCredentials.username ?? "").trim().toLowerCase();
+  const rawPassword = String(rawCredentials.password ?? "");
+  const throttle = await registerLoginAttempt(ip, rawUsername);
+  const parsed = credentialsSchema.safeParse(rawCredentials);
+  const user = parsed.success
+    ? await prisma.user.findUnique({ where: { username: parsed.data.username } })
+    : null;
+  const passwordMatches = await argon2.verify(
+    user?.passwordHash ?? dummyPasswordHash,
+    rawPassword,
+  );
+  if (throttle.blocked)
     redirect("/login?error=Demasiados+intentos.+Espera+unos+minutos");
-  const parsed = credentialsSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) redirect("/login?error=Revisa+los+datos");
-  const user = await prisma.user.findUnique({
-    where: { username: parsed.data.username },
-  });
-  if (
-    !user ||
-    !user.active ||
-    !(await argon2.verify(user.passwordHash, parsed.data.password))
-  )
+  if (!parsed.success || !user || !user.active || !passwordMatches)
     redirect("/login?error=Credenciales+incorrectas");
-  attempts.delete(ip);
+  await clearLoginThrottle(throttle.keys);
   await createSession(user.id);
   redirect("/");
 }

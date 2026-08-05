@@ -15,7 +15,7 @@ PostgreSQL sólo está en la red interna. La aplicación se publica en loopback 
 
 ## Variables
 
-Consulta `.env.example`. `DATABASE_URL`, `APP_URL`, `PHOTO_STORAGE_PATH`, `MAX_UPLOAD_MB`, `TILE_URL` y `TILE_ATTRIBUTION` controlan base de datos, origen, fotos y mapa. Da al UID 1001 permisos de escritura sobre un directorio de fotos enlazado desde el host si no utilizas el volumen de Compose.
+Consulta `.env.example`. Además de la conexión, origen y almacenamiento, configura `LOGIN_RATE_LIMIT_SECRET` con un secreto aleatorio largo. `MAX_UPLOAD_MB`, `MAX_IMAGE_WIDTH`, `MAX_IMAGE_HEIGHT` y `MAX_IMAGE_PIXELS` limitan las imágenes antes de procesarlas. Da al UID 1001 permisos de escritura sobre un directorio enlazado desde el host si no utilizas el volumen de Compose.
 
 ## Dominio y HTTPS
 
@@ -39,18 +39,28 @@ No hay recuperación pública por seguridad. Con acceso administrativo al servid
 
 ## Calidad
 
-`npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test` y `npm run build`. Playwright requiere una instancia preparada: `npm run test:e2e`.
+`npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test` y `npm run build`.
+
+Las pruebas de integración y E2E utilizan exclusivamente `pescamigos_e2e`. Arranca su PostgreSQL efímero con `docker compose -f docker-compose.e2e.yml up -d`, ejecuta `npm run test:integration` y `npm run test:e2e`, y detenlo con `docker compose -f docker-compose.e2e.yml down`. El preparador se niega a reiniciar una base cuyo nombre no contenga expresamente `pescamigos_e2e`.
+
+GitHub Actions ejecuta instalación reproducible, lint, tipos, pruebas unitarias, integración, build, auditoría de producción y los diez flujos E2E. Consulta `SECURITY_AUDIT.md` para el detalle de dependencias y alcance.
 
 ## Importación de especies
 
 Consulta `docs/FORMATO_IMPORTACION.md`. El importador fusiona por `slug` y asigna `PENDING` cuando `verificationStatus` no está presente.
 
-## Limitaciones conocidas del MVP
+## Limitaciones de seguridad
 
-- Las fichas incluidas son sólo demostrativas y están pendientes de revisión; no forman una lista exhaustiva ni consejo legal.
-- HEIC se rechaza con un mensaje claro porque su soporte depende de libvips; JPEG, PNG y WebP sí están soportados.
-- El rate limit de login es por proceso y presupone una sola réplica.
-- El mapa Leaflet permite selección y arrastre, pero todavía no agrupa marcadores cercanos cuando hay muchos.
-- Quedan pendientes la edición extensa de especies y sus ilustraciones, y algunos desgloses estadísticos por especie.
-- Las pruebas E2E de flujos con base de datos requieren fixtures y todavía no cubren los diez escenarios solicitados.
-- A 3 de agosto de 2026, `npm audit --omit=dev` informa tres avisos altos en copias internas de `postcss@8.4.31` y `sharp@0.34.5` de Next.js 16.2.12. Las dependencias directas ya usan versiones corregidas; npm sólo propone degradar a Next 9, una solución incompatible. Hay que actualizar Next cuando publique una versión que renueve esas copias internas.
+- HEIC no está soportado. Solo se aceptan por firma JPEG, PNG y WebP; GIF, TIFF, SVG, VIPS y formatos desconocidos se rechazan.
+- El rate limit de login es persistente en PostgreSQL y funciona entre reinicios y réplicas que compartan la base. Para despliegues detrás de proxies distintos de Caddy debe verificarse que `X-Forwarded-For`/`X-Real-IP` procedan únicamente del proxy de confianza.
+- No hay vulnerabilidades conocidas en `npm audit --omit=dev` a 5 de agosto de 2026. La auditoría debe revisarse en cada actualización.
+
+## Limitaciones funcionales
+
+- El catálogo se mantiene mediante importación JSON y puede no ser exhaustivo. La información biológica y legal debe revisarse y la normativa vigente debe comprobarse siempre antes de pescar.
+- El mapa Leaflet no agrupa todavía marcadores cercanos cuando hay muchos.
+
+## Mejoras opcionales
+
+- Automatizar copias cifradas fuera del servidor y ensayar restauraciones periódicas.
+- Añadir monitorización externa de disponibilidad, espacio de fotografías y caducidad de copias.

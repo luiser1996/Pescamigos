@@ -16,11 +16,22 @@ services:
   app:
     build: .
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       DATABASE_URL: postgresql://pescamigos:${POSTGRES_PASSWORD}@db:5432/pescamigos?schema=public
       APP_URL: ${APP_URL:-http://localhost:3000}
+      LOGIN_RATE_LIMIT_SECRET: ${LOGIN_RATE_LIMIT_SECRET:-${POSTGRES_PASSWORD}}
       PHOTO_STORAGE_PATH: /data/photos
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-12}
+      MAX_IMAGE_WIDTH: ${MAX_IMAGE_WIDTH:-12000}
+      MAX_IMAGE_HEIGHT: ${MAX_IMAGE_HEIGHT:-12000}
+      MAX_IMAGE_PIXELS: ${MAX_IMAGE_PIXELS:-60000000}
       TILE_URL: ${TILE_URL:-https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png}
       TILE_ATTRIBUTION: ${TILE_ATTRIBUTION:-&copy; OpenStreetMap contributors}
       GEOCODING_URL: ${GEOCODING_URL:-https://nominatim.openstreetmap.org/search}

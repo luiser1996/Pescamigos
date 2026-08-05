@@ -68,6 +68,18 @@ model Session {
   @@index([userId, expiresAt])
 }
 
+model LoginThrottle {
+  id        String   @id @default(cuid())
+  scope     String
+  keyHash   String
+  attempts  Int      @default(1)
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@unique([scope, keyHash])
+  @@index([resetAt])
+}
+
 model Species {
   id                    String             @id @default(cuid())
   slug                  String             @unique
