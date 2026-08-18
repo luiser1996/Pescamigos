@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { optimizeImageFile, replaceInputFiles } from "@/lib/client-image";
 
-type Drag = { x: number; y: number; focusX: number; focusY: number };
+type Drag = {
+  x: number;
+  y: number;
+  focusX: number;
+  focusY: number;
+  overflowX: number;
+  overflowY: number;
+};
 
 export function ImageCropInput({
   name,
@@ -27,9 +34,19 @@ export function ImageCropInput({
   const [x, setX] = useState(50);
   const [y, setY] = useState(50);
   const [zoom, setZoom] = useState(1);
+  const [sourceAspect, setSourceAspect] = useState(4 / 3);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const drag = useRef<Drag | null>(null);
+  const frameAspect = round ? 1 : 4 / 3;
+  const baseWidthPercent =
+    sourceAspect >= frameAspect ? (sourceAspect / frameAspect) * 100 : 100;
+  const baseHeightPercent =
+    sourceAspect >= frameAspect ? 100 : (frameAspect / sourceAspect) * 100;
+  const imageWidthPercent = baseWidthPercent * zoom;
+  const imageHeightPercent = baseHeightPercent * zoom;
+  const leftPercent = -((imageWidthPercent - 100) * x) / 100;
+  const topPercent = -((imageHeightPercent - 100) * y) / 100;
 
   useEffect(
     () => () => {
@@ -117,11 +134,20 @@ export function ImageCropInput({
           <div
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture(event.pointerId);
+              const bounds = event.currentTarget.getBoundingClientRect();
               drag.current = {
                 x: event.clientX,
                 y: event.clientY,
                 focusX: x,
                 focusY: y,
+                overflowX: Math.max(
+                  0,
+                  (bounds.width * (imageWidthPercent - 100)) / 100,
+                ),
+                overflowY: Math.max(
+                  0,
+                  (bounds.height * (imageHeightPercent - 100)) / 100,
+                ),
               };
             }}
             onPointerMove={(event) => {
@@ -131,7 +157,9 @@ export function ImageCropInput({
                   0,
                   Math.min(
                     100,
-                    drag.current.focusX - (event.clientX - drag.current.x) / 2,
+                    drag.current.focusX -
+                      ((event.clientX - drag.current.x) * 100) /
+                        Math.max(1, drag.current.overflowX),
                   ),
                 ),
               );
@@ -140,12 +168,17 @@ export function ImageCropInput({
                   0,
                   Math.min(
                     100,
-                    drag.current.focusY - (event.clientY - drag.current.y) / 2,
+                    drag.current.focusY -
+                      ((event.clientY - drag.current.y) * 100) /
+                        Math.max(1, drag.current.overflowY),
                   ),
                 ),
               );
             }}
             onPointerUp={() => {
+              drag.current = null;
+            }}
+            onPointerCancel={() => {
               drag.current = null;
             }}
             style={{
@@ -159,6 +192,7 @@ export function ImageCropInput({
               touchAction: "none",
               cursor: "grab",
               background: "#dfe9e1",
+              position: "relative",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -166,12 +200,19 @@ export function ImageCropInput({
               draggable={false}
               src={url}
               alt="Vista previa del recorte"
+              onLoad={(event) =>
+                setSourceAspect(
+                  event.currentTarget.naturalWidth /
+                    event.currentTarget.naturalHeight,
+                )
+              }
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: `${x}% ${y}%`,
-                transform: `scale(${zoom})`,
+                position: "absolute",
+                width: `${imageWidthPercent}%`,
+                height: `${imageHeightPercent}%`,
+                left: `${leftPercent}%`,
+                top: `${topPercent}%`,
+                objectFit: "fill",
                 userSelect: "none",
                 pointerEvents: "none",
               }}
@@ -184,14 +225,14 @@ export function ImageCropInput({
             <button
               type="button"
               aria-label="Mover arriba"
-              onClick={() => setY((value) => Math.max(0, value - 1))}
+              onClick={() => setY((value) => Math.max(0, value - 5))}
             >
               ↑
             </button>
             <button
               type="button"
               aria-label="Mover izquierda"
-              onClick={() => setX((value) => Math.max(0, value - 1))}
+              onClick={() => setX((value) => Math.max(0, value - 5))}
             >
               ←
             </button>
@@ -208,40 +249,18 @@ export function ImageCropInput({
             <button
               type="button"
               aria-label="Mover derecha"
-              onClick={() => setX((value) => Math.min(100, value + 1))}
+              onClick={() => setX((value) => Math.min(100, value + 5))}
             >
               →
             </button>
             <button
               type="button"
               aria-label="Mover abajo"
-              onClick={() => setY((value) => Math.min(100, value + 1))}
+              onClick={() => setY((value) => Math.min(100, value + 5))}
             >
               ↓
             </button>
           </div>
-          <label className="field">
-            Posición horizontal
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.5"
-              value={x}
-              onChange={(event) => setX(Number(event.target.value))}
-            />
-          </label>
-          <label className="field">
-            Posición vertical
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="0.5"
-              value={y}
-              onChange={(event) => setY(Number(event.target.value))}
-            />
-          </label>
           <label className="field">
             Zoom
             <input
