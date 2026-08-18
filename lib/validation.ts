@@ -12,18 +12,25 @@ export const credentialsSchema = z.object({
 });
 
 export const catchSchema = z.object({
-  speciesId: z.string().min(1),
-  placeId: z.string().min(1),
+  speciesId: z.string().min(1, "elige una especie"),
+  placeId: z.string().min(1, "elige o crea un lugar"),
   caughtAt: z.coerce
-    .date()
+    .date({ error: "introduce una fecha y hora válidas" })
     .refine(
       (date) => date.getTime() <= Date.now() + 5 * 60_000,
       "La fecha no puede estar en el futuro",
     ),
-  lengthCm: z.coerce.number().positive().max(500),
+  lengthCm: z.coerce
+    .number({ error: "introduce una longitud válida" })
+    .positive("debe ser mayor que cero")
+    .max(500, "no puede superar 500 cm"),
   weightG: z.preprocess(
     (value) => (value === "" || value == null ? undefined : value),
-    z.coerce.number().positive().max(1_000_000).optional(),
+    z.coerce
+      .number({ error: "introduce un peso válido" })
+      .positive("debe ser mayor que cero")
+      .max(1_000_000, "no puede superar 1.000.000 g")
+      .optional(),
   ),
   mode: z.enum([
     "SHORE",
@@ -36,8 +43,8 @@ export const catchSchema = z.object({
     "OTHER",
   ]),
   disposition: z.enum(["RELEASED", "KEPT"]),
-  notes: z.string().max(2000).optional(),
-  idempotencyKey: z.string().uuid(),
+  notes: z.string().max(2000, "no pueden superar 2.000 caracteres").optional(),
+  idempotencyKey: z.string().uuid("recarga la página y vuelve a intentarlo"),
 });
 
 export const placeSchema = z.object({

@@ -11,18 +11,46 @@ import {
   placeSchema,
 } from "@/lib/validation";
 
-const maxUploadBytes = (Number(process.env.MAX_UPLOAD_MB) || 12) * 1024 * 1024;
 type SavedPhoto = Awaited<ReturnType<typeof savePhoto>>;
+
+const catchFieldNames: Record<string, string> = {
+  speciesId: "Especie",
+  placeId: "Lugar",
+  caughtAt: "Fecha y hora",
+  lengthCm: "Longitud",
+  weightG: "Peso",
+  mode: "Entorno de pesca",
+  disposition: "Resultado",
+  notes: "Notas",
+  idempotencyKey: "Identificador del formulario",
+};
+
+function validationMessage(error: {
+  issues: { path: PropertyKey[]; message: string }[];
+}) {
+  return error.issues
+    .map((issue) => {
+      const key = String(issue.path[0] ?? "");
+      return `${catchFieldNames[key] ?? "Formulario"}: ${issue.message}`;
+    })
+    .join(" · ");
+}
+
+function errorUrl(path: string, message: string) {
+  return `${path}?error=${encodeURIComponent(message)}`;
+}
+
+function safeImageError(error: unknown) {
+  return error instanceof Error && error.message
+    ? error.message
+    : "No se pudo procesar la imagen";
+}
 
 export async function createCatchAction(formData: FormData) {
   const user = await requireUser();
   const photo = formData.get("photo");
   if (!(photo instanceof File) || photo.size === 0)
-    redirect("/capturas/nueva?error=La+foto+principal+es+obligatoria");
-  if (photo.size > maxUploadBytes)
-    redirect(
-      "/capturas/nueva?error=La+foto+principal+supera+el+máximo+de+12+MB",
-    );
+    redirect(errorUrl("/capturas/nueva", "Foto principal: es obligatoria"));
 
   let placeId = String(formData.get("placeId") ?? "");
   if (placeId === "__new" || !placeId) {
@@ -34,7 +62,10 @@ export async function createCatchAction(formData: FormData) {
     });
     if (!place.success)
       redirect(
-        "/capturas/nueva?error=Revisa+el+nombre+y+las+coordenadas+del+lugar",
+        errorUrl(
+          "/capturas/nueva",
+          `Nuevo lugar: ${place.error.issues.map((issue) => issue.message).join(" · ")}`,
+        ),
       );
     placeId = (
       await prisma.fishingPlace.create({
@@ -48,7 +79,7 @@ export async function createCatchAction(formData: FormData) {
     placeId,
   });
   if (!parsed.success)
-    redirect("/capturas/nueva?error=Revisa+los+datos+de+la+captura");
+    redirect(errorUrl("/capturas/nueva", validationMessage(parsed.error)));
   const existing = await prisma.catch.findUnique({
     where: { idempotencyKey: parsed.data.idempotencyKey },
   });
@@ -58,10 +89,6 @@ export async function createCatchAction(formData: FormData) {
     .getAll("photos")
     .filter((item): item is File => item instanceof File && item.size > 0)
     .slice(0, 5);
-  if (extras.some((file) => file.size > maxUploadBytes))
-    redirect(
-      "/capturas/nueva?error=Una+fotografía+adicional+supera+el+máximo+de+12+MB",
-    );
   const saved: SavedPhoto[] = [];
   try {
     saved.push(
@@ -73,7 +100,13 @@ export async function createCatchAction(formData: FormData) {
       ),
     );
     for (const file of extras) saved.push(await savePhoto(file));
-  } catch {
+  } catch (error) {
+    console.error("catch_photo_processing_failed", {
+      userId: user.id,
+      primaryBytes: photo.size,
+      extraBytes: extras.map((file) => file.size),
+      reason: safeImageError(error),
+    });
     await removeSavedPhoto(
       saved.flatMap((file) => [
         file.originalPath,
@@ -82,7 +115,7 @@ export async function createCatchAction(formData: FormData) {
       ]),
     );
     redirect(
-      "/capturas/nueva?error=No+se+pudo+procesar+la+foto.+Usa+JPEG,+PNG+o+WebP+de+menos+de+12+MB",
+      errorUrl("/capturas/nueva", `Foto principal: ${safeImageError(error)}`),
     );
   }
   let itemId: string;
@@ -133,7 +166,10 @@ export async function updateCatchAction(id: string, formData: FormData) {
     });
     if (!place.success)
       redirect(
-        `/capturas/${id}/editar?error=Revisa+la+nueva+ubicación`,
+        errorUrl(
+          `/capturas/${id}/editar`,
+          `Nuevo lugar: ${place.error.issues.map((issue) => issue.message).join(" · ")}`,
+        ),
         RedirectType.replace,
       );
     placeId = (
@@ -148,7 +184,7 @@ export async function updateCatchAction(id: string, formData: FormData) {
   });
   if (!parsed.success)
     redirect(
-      `/capturas/${id}/editar?error=Revisa+los+datos`,
+      errorUrl(`/capturas/${id}/editar`, validationMessage(parsed.error)),
       RedirectType.replace,
     );
   const primary = formData.get("primaryPhoto");
@@ -160,11 +196,6 @@ export async function updateCatchAction(id: string, formData: FormData) {
     primary instanceof File && primary.size > 0 ? primary : null,
     ...extras,
   ].filter((file): file is File => file !== null);
-  if (files.some((file) => file.size > maxUploadBytes))
-    redirect(
-      `/capturas/${id}/editar?error=Una+fotografía+supera+el+máximo+de+12+MB`,
-      RedirectType.replace,
-    );
   const saved: SavedPhoto[] = [];
   try {
     for (const [index, file] of files.entries()) {
@@ -179,7 +210,13 @@ export async function updateCatchAction(id: string, formData: FormData) {
           : await savePhoto(file),
       );
     }
-  } catch {
+  } catch (error) {
+    console.error("catch_photo_update_failed", {
+      userId: actor.id,
+      catchId: id,
+      fileBytes: files.map((file) => file.size),
+      reason: safeImageError(error),
+    });
     await removeSavedPhoto(
       saved.flatMap((file) => [
         file.originalPath,
@@ -188,7 +225,10 @@ export async function updateCatchAction(id: string, formData: FormData) {
       ]),
     );
     redirect(
-      `/capturas/${id}/editar?error=No+se+pudo+procesar+la+foto.+Usa+JPEG,+PNG+o+WebP+de+menos+de+12+MB`,
+      errorUrl(
+        `/capturas/${id}/editar`,
+        `Fotografía: ${safeImageError(error)}`,
+      ),
       RedirectType.replace,
     );
   }

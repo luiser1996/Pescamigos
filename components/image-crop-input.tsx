@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
+import { optimizeImageFile, replaceInputFiles } from "@/lib/client-image";
 
 type Drag = { x: number; y: number; focusX: number; focusY: number };
 
@@ -27,6 +28,7 @@ export function ImageCropInput({
   const [y, setY] = useState(50);
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const drag = useRef<Drag | null>(null);
 
   useEffect(
@@ -64,17 +66,40 @@ export function ImageCropInput({
           type="file"
           accept="image/jpeg,image/png,image/webp"
           required={required}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file && file.size > 12 * 1024 * 1024) {
-              event.target.value = "";
-              setError(`“${file.name}” supera el máximo de 12 MB.`);
+          onChange={async (event) => {
+            const input = event.currentTarget;
+            const original = input.files?.[0];
+            setError("");
+            setStatus(
+              original && original.size > 10 * 1024 * 1024
+                ? "Reduciendo imagen…"
+                : "",
+            );
+            if (url) URL.revokeObjectURL(url);
+            if (!original) {
               setUrl(undefined);
+              setStatus("");
               return;
             }
-            setError("");
-            if (url) URL.revokeObjectURL(url);
-            setUrl(file ? URL.createObjectURL(file) : undefined);
+            try {
+              const file = await optimizeImageFile(original);
+              replaceInputFiles(input, [file]);
+              setUrl(URL.createObjectURL(file));
+              setStatus(
+                file === original
+                  ? ""
+                  : "Imagen reducida automáticamente antes de subirla.",
+              );
+            } catch (cause) {
+              input.value = "";
+              setUrl(undefined);
+              setStatus("");
+              setError(
+                cause instanceof Error
+                  ? cause.message
+                  : "No se pudo preparar la imagen.",
+              );
+            }
             setX(50);
             setY(50);
             setZoom(1);
@@ -85,6 +110,7 @@ export function ImageCropInput({
             {error}
           </small>
         )}
+        {status && <small aria-live="polite">{status}</small>}
       </label>
       {url && (
         <>
@@ -152,15 +178,77 @@ export function ImageCropInput({
             />
           </div>
           <small style={{ textAlign: "center" }}>
-            Arrastra la foto para encuadrarla.
+            Arrastra la foto o usa los controles para encuadrarla con precisión.
           </small>
+          <div className="crop-direction-controls" aria-label="Mover encuadre">
+            <button
+              type="button"
+              aria-label="Mover arriba"
+              onClick={() => setY((value) => Math.max(0, value - 1))}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              aria-label="Mover izquierda"
+              onClick={() => setX((value) => Math.max(0, value - 1))}
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              aria-label="Centrar encuadre"
+              onClick={() => {
+                setX(50);
+                setY(50);
+              }}
+            >
+              •
+            </button>
+            <button
+              type="button"
+              aria-label="Mover derecha"
+              onClick={() => setX((value) => Math.min(100, value + 1))}
+            >
+              →
+            </button>
+            <button
+              type="button"
+              aria-label="Mover abajo"
+              onClick={() => setY((value) => Math.min(100, value + 1))}
+            >
+              ↓
+            </button>
+          </div>
+          <label className="field">
+            Posición horizontal
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.5"
+              value={x}
+              onChange={(event) => setX(Number(event.target.value))}
+            />
+          </label>
+          <label className="field">
+            Posición vertical
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.5"
+              value={y}
+              onChange={(event) => setY(Number(event.target.value))}
+            />
+          </label>
           <label className="field">
             Zoom
             <input
               type="range"
               min="1"
               max="3"
-              step=".1"
+              step=".05"
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
             />

@@ -73,26 +73,32 @@ describe("procesamiento seguro de imágenes", () => {
     );
   });
 
-  it("rechaza imágenes que superan anchura, altura o píxeles configurados", async () => {
+  it("reduce imágenes que superan la anchura o altura configuradas", async () => {
     const png = await sharp({
       create: { width: 101, height: 20, channels: 3, background: "green" },
     })
       .png()
       .toBuffer();
     process.env.MAX_IMAGE_WIDTH = "100";
-    await expect(savePhoto(uploaded(png, "grande.png"))).rejects.toThrow(
-      "dimensiones permitidas",
-    );
+    const saved = await savePhoto(uploaded(png, "grande.png"));
+    expect(saved.width).toBeLessThanOrEqual(100);
     process.env.MAX_IMAGE_WIDTH = "1000";
   });
 
-  it("rechaza archivos que superan el tamaño configurado", async () => {
-    process.env.MAX_UPLOAD_MB = "0.000001";
-    await expect(
-      savePhoto(
-        uploaded(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), "grande.jpg"),
-      ),
-    ).rejects.toThrow("tamaño permitido");
+  it("reduce automáticamente archivos que superan el tamaño configurado", async () => {
+    process.env.MAX_UPLOAD_MB = "0.1";
+    const pixels = Buffer.alloc(500 * 500 * 3);
+    for (let index = 0; index < pixels.length; index += 1)
+      pixels[index] = index % 251;
+    const png = await sharp(pixels, {
+      raw: { width: 500, height: 500, channels: 3 },
+    })
+      .png({ compressionLevel: 0 })
+      .toBuffer();
+    const saved = await savePhoto(uploaded(png, "grande.png", "image/png"));
+    expect((await readFile(saved.originalPath)).byteLength).toBeLessThanOrEqual(
+      0.1 * 1024 * 1024,
+    );
     process.env.MAX_UPLOAD_MB = "2";
   });
 });

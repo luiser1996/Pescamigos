@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
+import sharp, { type Metadata } from "sharp";
 
 const root =
   process.env.PHOTO_STORAGE_PATH ??
   path.join(/* turbopackIgnore: true */ process.cwd(), "storage");
 const maxBytes = () => (Number(process.env.MAX_UPLOAD_MB) || 12) * 1024 * 1024;
+const maxRawBytes = () =>
+  (Number(process.env.MAX_RAW_UPLOAD_MB) || 70) * 1024 * 1024;
 const maxWidth = () => Number(process.env.MAX_IMAGE_WIDTH) || 12000;
 const maxHeight = () => Number(process.env.MAX_IMAGE_HEIGHT) || 12000;
 const maxPixels = () => Number(process.env.MAX_IMAGE_PIXELS) || 60_000_000;
@@ -34,8 +36,9 @@ function trustedImageFormat(input: Buffer) {
 }
 
 async function inspectImage(file: File) {
-  if (file.size === 0 || file.size > maxBytes())
-    throw new Error("La foto supera el tamaño permitido");
+  if (file.size === 0) throw new Error("La imagen está vacía");
+  if (file.size > maxRawBytes())
+    throw new Error("La imagen supera el máximo bruto de 70 MB");
   const input = Buffer.from(await file.arrayBuffer());
   const signature = trustedImageFormat(input);
   const meta = await sharp(input, {
@@ -47,17 +50,48 @@ async function inspectImage(file: File) {
     .catch(() => null);
   if (!meta || meta.format !== signature || !meta.width || !meta.height)
     throw new Error("Usa una imagen JPEG, PNG o WebP válida");
-  if (
-    meta.width > maxWidth() ||
-    meta.height > maxHeight() ||
-    meta.width * meta.height > maxPixels()
-  )
-    throw new Error("La imagen supera las dimensiones permitidas");
+  if (meta.width * meta.height > maxPixels())
+    throw new Error(
+      "La imagen tiene demasiados píxeles para procesarla con seguridad",
+    );
   return { input, meta };
 }
 
+async function normalizedInput(input: Buffer, meta: Metadata) {
+  const shouldNormalize =
+    input.length > maxBytes() ||
+    (meta.width ?? 0) > maxWidth() ||
+    (meta.height ?? 0) > maxHeight();
+  if (!shouldNormalize) return input;
+
+  let edge = Math.min(5000, maxWidth(), maxHeight());
+  let quality = 84;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const output = await sharp(input, {
+      failOn: "error",
+      limitInputPixels: maxPixels(),
+      animated: false,
+    })
+      .rotate()
+      .resize({
+        width: edge,
+        height: edge,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality })
+      .toBuffer();
+    if (output.length <= maxBytes()) return output;
+    if (quality > 58) quality -= 10;
+    else edge = Math.max(1200, Math.round(edge * 0.8));
+  }
+  throw new Error("No se ha podido reducir la imagen al tamaño permitido");
+}
+
 export async function savePhoto(file: File) {
-  const { input, meta } = await inspectImage(file);
+  const inspected = await inspectImage(file);
+  const input = await normalizedInput(inspected.input, inspected.meta);
+  const meta = await sharp(input).metadata();
   const id = randomUUID();
   const temp = path.join(/* turbopackIgnore: true */ root, "tmp", id);
   const final = path.join(/* turbopackIgnore: true */ root, id.slice(0, 2));
@@ -101,7 +135,7 @@ export async function savePhoto(file: File) {
       mimeType: "image/webp",
       width: meta.width ?? 0,
       height: meta.height ?? 0,
-      sizeBytes: file.size,
+      sizeBytes: input.length,
     };
   } catch (error) {
     await rm(temp, { recursive: true, force: true });
@@ -130,7 +164,8 @@ async function saveCroppedImage(
   zoom: number,
   aspect: number,
 ) {
-  const { input } = await inspectImage(file);
+  const inspected = await inspectImage(file);
+  const input = await normalizedInput(inspected.input, inspected.meta);
   const rotated = await sharp(input, {
     failOn: "error",
     limitInputPixels: maxPixels(),
@@ -198,7 +233,7 @@ async function saveCroppedImage(
       mimeType: "image/webp",
       width: outputWidth,
       height: outputHeight,
-      sizeBytes: file.size,
+      sizeBytes: input.length,
     };
   } catch (error) {
     await rm(temp, { recursive: true, force: true });
