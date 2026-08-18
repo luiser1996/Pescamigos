@@ -209,10 +209,11 @@ export function ImageCropInput({
               style={{
                 position: "absolute",
                 width: `${imageWidthPercent}%`,
-                height: `${imageHeightPercent}%`,
+                height: "auto",
+                maxWidth: "none",
+                maxHeight: "none",
                 left: `${leftPercent}%`,
                 top: `${topPercent}%`,
-                objectFit: "fill",
                 userSelect: "none",
                 pointerEvents: "none",
               }}
