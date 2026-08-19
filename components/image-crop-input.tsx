@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
-import { optimizeImageFile, replaceInputFiles } from "@/lib/client-image";
+import {
+  optimizeImageFile,
+  replaceInputFiles,
+  setImageProcessing,
+} from "@/lib/client-image";
 
 type Drag = {
   x: number;
@@ -87,17 +91,14 @@ export function ImageCropInput({
             const input = event.currentTarget;
             const original = input.files?.[0];
             setError("");
-            setStatus(
-              original && original.size > 10 * 1024 * 1024
-                ? "Reduciendo imagen…"
-                : "",
-            );
+            setStatus(original ? "Preparando imagen…" : "");
             if (url) URL.revokeObjectURL(url);
             if (!original) {
               setUrl(undefined);
               setStatus("");
               return;
             }
+            setImageProcessing(input, true);
             try {
               const file = await optimizeImageFile(original);
               replaceInputFiles(input, [file]);
@@ -116,6 +117,8 @@ export function ImageCropInput({
                   ? cause.message
                   : "No se pudo preparar la imagen.",
               );
+            } finally {
+              setImageProcessing(input, false);
             }
             setX(50);
             setY(50);

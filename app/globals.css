@@ -341,7 +341,29 @@ textarea {
   cursor: pointer;
 }
 .bottom-nav {
+  position: fixed;
+  z-index: 1000;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid #cfe2d3;
+  background: #fffdf5f2;
+  backdrop-filter: blur(10px);
   isolation: isolate;
+}
+.bottom-nav-link {
+  min-height: 62px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  color: var(--ink);
+  font-size: 11px;
+}
+.bottom-nav-link.active {
+  color: var(--leaf);
+  font-weight: 850;
 }
 .fish-placeholder {
   display: grid;

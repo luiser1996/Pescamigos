@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { optimizeImageFile, replaceInputFiles } from "@/lib/client-image";
+import {
+  optimizeImageFile,
+  replaceInputFiles,
+  setImageProcessing,
+} from "@/lib/client-image";
 
 export function ValidatedFileInput({
   name,
@@ -28,13 +32,18 @@ export function ValidatedFileInput({
             return;
           }
           setError("");
-          setStatus(
-            files.some((file) => file.size > 10 * 1024 * 1024)
-              ? "Reduciendo imágenes…"
-              : "",
-          );
+          if (!files.length) {
+            setStatus("");
+            return;
+          }
+          setStatus("Preparando imágenes…");
+          setImageProcessing(input, true);
           try {
-            const optimized = await Promise.all(files.map(optimizeImageFile));
+            const optimized: File[] = [];
+            for (const [index, file] of files.entries()) {
+              setStatus(`Preparando imagen ${index + 1} de ${files.length}…`);
+              optimized.push(await optimizeImageFile(file));
+            }
             replaceInputFiles(input, optimized);
             const reduced = optimized.filter(
               (file, index) => file !== files[index],
@@ -52,6 +61,8 @@ export function ValidatedFileInput({
                 ? cause.message
                 : "No se pudieron preparar las imágenes.",
             );
+          } finally {
+            setImageProcessing(input, false);
           }
         }}
       />
