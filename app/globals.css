@@ -104,6 +104,23 @@ textarea {
   color: var(--ink);
   background: var(--mint);
 }
+.error-card {
+  width: min(560px, 100%);
+  margin: 2rem auto;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  text-align: center;
+}
+.error-fish {
+  display: block;
+  font-size: 2.4rem;
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
 .field {
   display: grid;
   gap: 0.35rem;

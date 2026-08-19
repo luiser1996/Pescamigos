@@ -46,6 +46,20 @@ function safeImageError(error: unknown) {
     : "No se pudo procesar la imagen";
 }
 
+async function cleanupPhotos(
+  paths: string[],
+  context: Record<string, unknown>,
+) {
+  try {
+    await removeSavedPhoto(paths);
+  } catch (error) {
+    console.error("catch_photo_cleanup_failed", {
+      ...context,
+      reason: safeImageError(error),
+    });
+  }
+}
+
 export async function createCatchAction(formData: FormData) {
   const user = await requireUser();
   const photo = formData.get("photo");
@@ -270,22 +284,35 @@ export async function updateCatchAction(id: string, formData: FormData) {
         });
     });
   } catch (error) {
-    await removeSavedPhoto(
+    await cleanupPhotos(
       saved.flatMap((file) => [
         file.originalPath,
         file.webPath,
         file.thumbnailPath,
       ]),
+      { userId: actor.id, catchId: id, phase: "failed_update" },
     );
-    throw error;
+    console.error("catch_update_failed", {
+      userId: actor.id,
+      catchId: id,
+      reason: safeImageError(error),
+    });
+    redirect(
+      errorUrl(
+        `/capturas/${id}/editar`,
+        "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+      ),
+      RedirectType.replace,
+    );
   }
   if (replacingPrimary)
-    await removeSavedPhoto(
+    await cleanupPhotos(
       oldPrimaries.flatMap((photo) => [
         photo.originalPath,
         photo.webPath,
         photo.thumbnailPath,
       ]),
+      { userId: actor.id, catchId: id, phase: "replaced_primary" },
     );
   redirect(`/capturas/${id}?updated=1`, RedirectType.replace);
 }
