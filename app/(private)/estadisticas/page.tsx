@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { APP_TIME_ZONE, monthInAppTimeZone } from "@/lib/date";
 
 export default async function Stats() {
   const [species, catches, users, places] = await Promise.all([
@@ -35,19 +36,20 @@ export default async function Stats() {
   const byMonth = Array.from(
     { length: 12 },
     (_, month) =>
-      catches.filter((item) => item.caughtAt.getMonth() === month).length,
+      catches.filter((item) => monthInAppTimeZone(item.caughtAt) === month)
+        .length,
   );
   // La página es dinámica y refleja el mes real de la consulta.
   const now = new Date();
   const currentMonth = Number(
     new Intl.DateTimeFormat("en", {
       month: "numeric",
-      timeZone: "Europe/Madrid",
+      timeZone: APP_TIME_ZONE,
     }).format(now),
   );
   const monthName = new Intl.DateTimeFormat("es-ES", {
     month: "long",
-    timeZone: "Europe/Madrid",
+    timeZone: APP_TIME_ZONE,
   }).format(now);
   const seasonalSpecies = species
     .filter((item) => item.activeMonths.includes(currentMonth))
@@ -70,9 +72,7 @@ export default async function Stats() {
         <h2 className="stats-section-title" style={{ margin: 0 }}>
           Especies de mayor actividad actualmente
         </h2>
-        <p
-          style={{ margin: "6px 0 0", textTransform: "capitalize" }}
-        >
+        <p style={{ margin: "6px 0 0", textTransform: "capitalize" }}>
           Actividad biológica · {monthName}
         </p>
         {seasonalSpecies.length ? (

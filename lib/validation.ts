@@ -14,12 +14,7 @@ export const credentialsSchema = z.object({
 export const catchSchema = z.object({
   speciesId: z.string().min(1, "elige una especie"),
   placeId: z.string().min(1, "elige o crea un lugar"),
-  caughtAt: z.coerce
-    .date({ error: "introduce una fecha y hora válidas" })
-    .refine(
-      (date) => date.getTime() <= Date.now() + 5 * 60_000,
-      "La fecha no puede estar en el futuro",
-    ),
+  caughtAt: z.coerce.date({ error: "introduce una fecha y hora válidas" }),
   lengthCm: z.coerce
     .number({ error: "introduce una longitud válida" })
     .positive("debe ser mayor que cero")

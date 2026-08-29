@@ -1,6 +1,7 @@
 import { CatchMap } from "@/components/catch-map";
 import { FilterPanel } from "@/components/filter-panel";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/date";
 
 export default async function MapPage({
   searchParams,
@@ -124,7 +125,7 @@ export default async function MapPage({
             longitude: Number(place.longitude),
             catches: place.catches.map((capture) => ({
               id: capture.id,
-              label: `${capture.species.commonName} · ${capture.fisher.displayName} · ${capture.caughtAt.toLocaleDateString("es-ES")}`,
+              label: `${capture.species.commonName} · ${capture.fisher.displayName} · ${formatDate(capture.caughtAt)}`,
             })),
             imageId: place.placeImageId,
           }))}

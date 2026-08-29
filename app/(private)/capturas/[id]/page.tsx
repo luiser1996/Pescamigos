@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { canEditCatch } from "@/lib/validation";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { formatDateTime } from "@/lib/date";
 
 export default async function CatchDetail({
   params,
@@ -94,7 +95,7 @@ export default async function CatchDetail({
           {Number(item.lengthCm)} cm{" "}
           {item.weightG ? `· ${Number(item.weightG)} g` : ""}
         </p>
-        <p>{item.caughtAt.toLocaleString("es-ES")}</p>
+        <p>{formatDateTime(item.caughtAt)}</p>
         <p>{item.notes}</p>
       </section>
       {editable && (

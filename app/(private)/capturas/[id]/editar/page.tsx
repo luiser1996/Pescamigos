@@ -12,6 +12,7 @@ import { PlacePicker } from "@/components/place-picker";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidatedFileInput } from "@/components/validated-file-input";
 import { ConfirmSubmit } from "@/components/confirm-submit";
+import { LocalDateTimeInput } from "@/components/local-date-time-input";
 
 export default async function EditCatch({
   params,
@@ -34,11 +35,6 @@ export default async function EditCatch({
   });
   const { error, photoDeleted } = await searchParams;
   const action = updateCatchAction.bind(null, id);
-  const localDate = new Date(
-    item.caughtAt.getTime() - item.caughtAt.getTimezoneOffset() * 60000,
-  )
-    .toISOString()
-    .slice(0, 16);
   return (
     <>
       <h1>Editar captura</h1>
@@ -84,12 +80,7 @@ export default async function EditCatch({
         <PlacePicker places={places} selectedPlaceId={item.placeId} />
         <label className="field">
           Fecha y hora
-          <input
-            name="caughtAt"
-            type="datetime-local"
-            defaultValue={localDate}
-            required
-          />
+          <LocalDateTimeInput initialIso={item.caughtAt.toISOString()} />
         </label>
         <label className="field">
           Longitud (cm)

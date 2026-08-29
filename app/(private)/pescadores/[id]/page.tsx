@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/date";
 import { requireUser } from "@/lib/auth";
 import {
   changePasswordAction,
@@ -224,7 +225,7 @@ export default async function FisherProfile({
           key={item.id}
         >
           <b>{item.species.commonName}</b> · {item.place.name} ·{" "}
-          {item.caughtAt.toLocaleDateString("es-ES")}
+          {formatDate(item.caughtAt)}
         </Link>
       ))}
       {fisher.catches.length > 5 && (

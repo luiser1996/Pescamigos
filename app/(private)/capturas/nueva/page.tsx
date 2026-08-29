@@ -5,16 +5,12 @@ import { PlacePicker } from "@/components/place-picker";
 import { ImageCropInput } from "@/components/image-crop-input";
 import { SubmitButton } from "@/components/submit-button";
 import { ValidatedFileInput } from "@/components/validated-file-input";
+import { LocalDateTimeInput } from "@/components/local-date-time-input";
 export default async function NewCatch({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; species?: string }>;
 }) {
-  // El valor se calcula una sola vez al renderizar esta página de servidor.
-  // eslint-disable-next-line react-hooks/purity
-  const localNow = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
   const { error, species: selectedSpecies } = await searchParams;
   const [species, places] = await Promise.all([
     prisma.species.findMany({
@@ -64,12 +60,7 @@ export default async function NewCatch({
         <PlacePicker places={places} />
         <label className="field">
           3. Fecha y hora
-          <input
-            type="datetime-local"
-            name="caughtAt"
-            defaultValue={localNow}
-            required
-          />
+          <LocalDateTimeInput />
         </label>
         <label className="field">
           4. Longitud (cm)

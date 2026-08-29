@@ -4,6 +4,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { MemoryFilters } from "@/components/memory-filters";
 import { Pagination } from "@/components/pagination";
+import { formatDate } from "@/lib/date";
 
 type Filters = {
   from?: string;
@@ -138,8 +139,7 @@ export default async function Timeline({
               </Link>
               <div style={{ padding: "0 .5rem .6rem" }}>
                 <p style={{ margin: 0 }}>
-                  {capture.fisher.displayName} ·{" "}
-                  {capture.caughtAt.toLocaleDateString("es-ES")}
+                  {capture.fisher.displayName} · {formatDate(capture.caughtAt)}
                 </p>
                 <span>{capture.place.name}</span>
               </div>

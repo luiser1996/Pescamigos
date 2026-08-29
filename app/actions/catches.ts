@@ -4,6 +4,7 @@ import { redirect, RedirectType } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { removeSavedPhoto, saveCroppedCapture, savePhoto } from "@/lib/storage";
+import { dateFromLocalForm } from "@/lib/date";
 import {
   canEditCatch,
   catchEditSchema,
@@ -90,6 +91,7 @@ export async function createCatchAction(formData: FormData) {
 
   const parsed = catchSchema.safeParse({
     ...Object.fromEntries(formData),
+    caughtAt: dateFromLocalForm(formData),
     placeId,
   });
   if (!parsed.success)
@@ -194,6 +196,7 @@ export async function updateCatchAction(id: string, formData: FormData) {
   }
   const parsed = catchEditSchema.safeParse({
     ...Object.fromEntries(formData),
+    caughtAt: dateFromLocalForm(formData),
     placeId,
   });
   if (!parsed.success)

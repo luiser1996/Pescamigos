@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/date";
 import { Pagination } from "@/components/pagination";
 const months = [
   "Ene",
@@ -284,7 +285,7 @@ export default async function SpeciesDetail({
             <b>{capture.fisher.displayName}</b>
             <br />
             {capture.place.name} · {Number(capture.lengthCm)} cm ·{" "}
-            {capture.caughtAt.toLocaleDateString("es-ES")}
+            {formatDate(capture.caughtAt)}
           </span>
         </Link>
       ))}
