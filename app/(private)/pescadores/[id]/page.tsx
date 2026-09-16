@@ -165,12 +165,11 @@ export default async function FisherProfile({
             >
               <h2>Apodo</h2>
               <label className="field">
-                Apodo
+                Apodo visible
                 <input
                   name="nickname"
                   defaultValue={fisher.nickname ?? ""}
                   maxLength={60}
-                  placeholder="Por ejemplo, El cucharillas"
                 />
               </label>
               <small>
