@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/date";
-import { Pagination } from "@/components/pagination";
+import { StatisticsPodium } from "@/components/statistics-podium";
 const months = [
   "Ene",
   "Feb",
@@ -30,14 +29,10 @@ function Field({ title, value }: { title: string; value?: React.ReactNode }) {
 
 export default async function SpeciesDetail({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string }>;
 }) {
   const { slug } = await params;
-  const query = await searchParams;
-  const page = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
   const item = await prisma.species.findUnique({
     where: { slug },
     include: {
@@ -47,8 +42,6 @@ export default async function SpeciesDetail({
         where: { deletedAt: null },
         include: {
           fisher: { include: { avatarImage: true } },
-          place: true,
-          photos: { where: { isPrimary: true }, take: 1 },
         },
         orderBy: { caughtAt: "desc" },
       },
@@ -247,53 +240,40 @@ export default async function SpeciesDetail({
           autorización legal.
         </aside>
       </section>
-      <h2>Capturas ({item.catches.length})</h2>
+      <h2>Mejores capturas ({item.catches.length} en total)</h2>
       {item.catches.length === 0 && (
         <p className="card" style={{ padding: "1rem" }}>
           Todavía no hay capturas de esta especie.
         </p>
       )}
-      {item.catches.slice((page - 1) * 15, page * 15).map((capture) => (
-        <Link
-          href={`/capturas/${capture.id}`}
-          className="card"
-          style={{
-            padding: ".8rem",
-            marginBottom: 10,
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-          }}
-          key={capture.id}
-        >
-          {capture.photos[0] && (
-            <Image
-              unoptimized
-              src={`/api/photos/${capture.photos[0].id}`}
-              width={90}
-              height={70}
-              alt=""
-              style={{
-                width: 90,
-                height: 70,
-                borderRadius: 10,
-                objectFit: "cover",
-              }}
-            />
-          )}
-          <span>
-            <b>{capture.fisher.displayName}</b>
-            <br />
-            {capture.place.name} · {Number(capture.lengthCm)} cm ·{" "}
-            {formatDate(capture.caughtAt)}
-          </span>
-        </Link>
-      ))}
-      <Pagination
-        path={`/especies/${item.slug}`}
-        current={page}
-        totalItems={item.catches.length}
-      />
+      {item.catches.length > 0 && (
+        <StatisticsPodium
+          metric="Longitud"
+          unit="cm"
+          records={[...item.catches]
+            .sort(
+              (a, b) =>
+                Number(b.lengthCm) - Number(a.lengthCm) ||
+                b.caughtAt.getTime() - a.caughtAt.getTime() ||
+                a.id.localeCompare(b.id),
+            )
+            .slice(0, 3)
+            .map((capture) => ({
+              id: capture.id,
+              speciesName: item.commonName,
+              catalogImageId: item.catalogImageId,
+              fisherName: capture.fisher.displayName,
+              value: Number(capture.lengthCm),
+            }))}
+        />
+      )}
+      <Link
+        className="button"
+        style={{ marginTop: "1rem" }}
+        href={`/capturas?species=${encodeURIComponent(item.id)}`}
+      >
+        Mostrar todas las capturas ({item.catches.length})
+      </Link>
     </>
   );
 }

@@ -224,19 +224,18 @@ export default async function Stats() {
                   imageId={user.favoriteLureImageId}
                   alt={`Señuelo favorito de ${user.displayName}`}
                 />
-                <small>{user.favoriteLureName ?? "Señuelo estándar"}</small>
               </Link>
               <strong className="lost-lure-count">{user.lostLures}</strong>
               <small>señuelos perdidos</small>
               {user.id === actor.id && (
                 <div className="lure-counter-actions">
-                  <form action={changeLostLuresAction.bind(null, 1)}>
-                    <SubmitButton>+1</SubmitButton>
-                  </form>
                   <form action={changeLostLuresAction.bind(null, -1)}>
                     <SubmitButton disabled={user.lostLures === 0}>
                       −1
                     </SubmitButton>
+                  </form>
+                  <form action={changeLostLuresAction.bind(null, 1)}>
+                    <SubmitButton>+1</SubmitButton>
                   </form>
                 </div>
               )}
