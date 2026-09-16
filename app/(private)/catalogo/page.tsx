@@ -63,11 +63,7 @@ export default async function Catalog({
           }
         : {}),
       waterType:
-        p.agua === "FRESHWATER" ||
-        p.agua === "SALTWATER" ||
-        p.agua === "BRACKISH"
-          ? p.agua
-          : undefined,
+        p.agua === "FRESHWATER" || p.agua === "SALTWATER" ? p.agua : undefined,
     },
     include: {
       catalogImage: true,
@@ -161,7 +157,6 @@ export default async function Catalog({
               <option value="">Todas</option>
               <option value="FRESHWATER">Dulce</option>
               <option value="SALTWATER">Salada</option>
-              <option value="BRACKISH">Salobre</option>
             </select>
           </label>
           <label className="field">
@@ -204,15 +199,9 @@ export default async function Catalog({
         </small>
       </FilterPanel>
       {!shown.length && <p>No hay especies que coincidan con los filtros.</p>}
-      {["FRESHWATER", "SALTWATER", "BRACKISH"].map((w) => (
+      {["FRESHWATER", "SALTWATER"].map((w) => (
         <section key={w}>
-          <h2>
-            {w === "FRESHWATER"
-              ? "Agua dulce"
-              : w === "SALTWATER"
-                ? "Agua salada"
-                : "Agua salobre"}
-          </h2>
+          <h2>{w === "FRESHWATER" ? "Agua dulce" : "Agua salada"}</h2>
           <div
             style={{
               display: "grid",

@@ -206,7 +206,6 @@ export default async function Admin({
               <select name="waterType">
                 <option value="FRESHWATER">Dulce</option>
                 <option value="SALTWATER">Salada</option>
-                <option value="BRACKISH">Salobre</option>
               </select>
             </label>
             <label className="field">

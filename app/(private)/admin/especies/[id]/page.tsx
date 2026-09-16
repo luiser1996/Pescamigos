@@ -120,7 +120,6 @@ export default async function EditSpecies({
           <select name="waterType" defaultValue={item.waterType}>
             <option value="FRESHWATER">Dulce</option>
             <option value="SALTWATER">Salada</option>
-            <option value="BRACKISH">Salobre</option>
           </select>
         </label>
         {fields.map(([name, label]) => (

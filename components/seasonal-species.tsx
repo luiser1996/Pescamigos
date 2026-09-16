@@ -39,7 +39,7 @@ export async function SeasonalSpecies() {
                   ? "Agua dulce"
                   : item.waterType === "SALTWATER"
                     ? "Agua salada"
-                    : "Agua salobre"}
+                    : null}
                 {item.difficulty ? ` · dificultad ${item.difficulty}/5` : ""}
               </small>
             </Link>

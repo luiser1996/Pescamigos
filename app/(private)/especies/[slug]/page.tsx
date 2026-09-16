@@ -60,7 +60,7 @@ export default async function SpeciesDetail({
           ? "Agua dulce"
           : item.waterType === "SALTWATER"
             ? "Agua salada"
-            : "Agua salobre"}
+            : null}
       </p>
       <div
         style={{

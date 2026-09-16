@@ -71,7 +71,7 @@ export const speciesInputSchema = z.object({
     .regex(/^[a-z0-9-]+$/),
   commonName: z.string().trim().min(2).max(120),
   scientificName: z.string().trim().min(2).max(160),
-  waterType: z.enum(["FRESHWATER", "SALTWATER", "BRACKISH"]),
+  waterType: z.enum(["FRESHWATER", "SALTWATER"]),
   description: z.string().trim().max(4000).optional(),
   legalStatus: z.string().trim().max(3000).optional(),
   verificationStatus: z.enum(["PENDING", "VERIFIED", "NEEDS_REVIEW"]),
