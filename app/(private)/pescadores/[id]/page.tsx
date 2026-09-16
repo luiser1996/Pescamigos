@@ -8,7 +8,13 @@ import {
   changePasswordAction,
   updateDisplayNameAction,
 } from "@/app/actions/auth";
-import { updateAvatarAction } from "@/app/actions/media";
+import {
+  updateAvatarAction,
+  updateFavoriteLureAction,
+} from "@/app/actions/media";
+import { LureImage } from "@/components/lure-image";
+import { ValidatedFileInput } from "@/components/validated-file-input";
+import { SubmitButton } from "@/components/submit-button";
 import { AvatarCropInput } from "@/components/avatar-crop-input";
 import { PasswordInput } from "@/components/password-input";
 
@@ -22,6 +28,7 @@ export default async function FisherProfile({
     error?: string;
     changed?: string;
     avatar?: string;
+    lure?: string;
   }>;
 }) {
   const actor = await requireUser();
@@ -54,7 +61,7 @@ export default async function FisherProfile({
             {status.error}
           </p>
         )}
-        {(status.changed || status.avatar) && (
+        {(status.changed || status.avatar || status.lure) && (
           <p role="status">✓ Cambios guardados.</p>
         )}
         <section className="card" style={{ padding: "1.3rem" }}>
@@ -83,7 +90,22 @@ export default async function FisherProfile({
                 initial={fisher.displayName.slice(0, 1).toUpperCase()}
               />
               <small>Pulsa la foto para elegir una nueva.</small>
-              <button className="button">Guardar foto</button>
+              <SubmitButton>Guardar foto</SubmitButton>
+            </form>
+            <form
+              action={updateFavoriteLureAction}
+              className="favorite-lure-form"
+            >
+              <h2>Señuelo favorito</h2>
+              <LureImage
+                imageId={fisher.favoriteLureImageId}
+                alt="Tu señuelo favorito"
+              />
+              <label className="field">
+                Foto del señuelo
+                <ValidatedFileInput name="favoriteLure" />
+              </label>
+              <SubmitButton>Guardar señuelo favorito</SubmitButton>
             </form>
             <form
               action={updateDisplayNameAction}
@@ -139,7 +161,7 @@ export default async function FisherProfile({
           {status.error}
         </p>
       )}
-      {(status.changed || status.avatar) && (
+      {(status.changed || status.avatar || status.lure) && (
         <p role="status">✓ Cambios guardados.</p>
       )}
       <div
@@ -214,6 +236,17 @@ export default async function FisherProfile({
         <article className="card" style={{ padding: "1rem" }}>
           <small>Mayor peso</small>
           <h2>{heaviest ? `${Number(heaviest.weightG)} g` : "—"}</h2>
+        </article>
+        <article className="card" style={{ padding: "1rem" }}>
+          <small>Señuelos perdidos</small>
+          <h2>{fisher.lostLures}</h2>
+        </article>
+        <article className="card" style={{ padding: "1rem" }}>
+          <small>Señuelo favorito</small>
+          <LureImage
+            imageId={fisher.favoriteLureImageId}
+            alt={`Señuelo favorito de ${fisher.displayName}`}
+          />
         </article>
       </div>
       <h2>Últimos recuerdos</h2>

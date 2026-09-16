@@ -55,8 +55,8 @@ export default async function Timeline({
         photos: { where: { isPrimary: true }, take: 1 },
       },
       orderBy: { caughtAt: filters.order === "asc" ? "asc" : "desc" },
-      skip: (page - 1) * 15,
-      take: 15,
+      skip: (page - 1) * 12,
+      take: 12,
     }),
     prisma.catch.count({ where }),
     prisma.species.findMany({
@@ -151,6 +151,7 @@ export default async function Timeline({
         path="/capturas"
         current={page}
         totalItems={total}
+        pageSize={12}
         params={filters}
       />
     </>

@@ -104,9 +104,7 @@ export function ImageCropInput({
               replaceInputFiles(input, [file]);
               setUrl(URL.createObjectURL(file));
               setStatus(
-                file === original
-                  ? ""
-                  : "Imagen reducida automáticamente antes de subirla.",
+                file === original ? "" : "Imagen preparada antes de subirla.",
               );
             } catch (cause) {
               input.value = "";

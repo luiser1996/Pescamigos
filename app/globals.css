@@ -39,6 +39,244 @@ h2 {
   font-weight: 800;
   letter-spacing: -0.01em;
 }
+.stats-section {
+  margin-top: 1.5rem;
+}
+.stats-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 1.5rem;
+}
+.stats-summary-card {
+  min-height: 112px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.stats-summary-card strong {
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+.stats-horizontal-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 4px 14px;
+}
+.fisher-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem;
+  flex: 0 0 auto;
+}
+.fisher-stat-card small {
+  display: block;
+  margin-top: 4px;
+}
+.fisher-stat-avatar {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.avatar-initial {
+  display: grid;
+  place-items: center;
+  background: var(--leaf);
+  color: white;
+  font-weight: 850;
+  font-size: 1.25rem;
+}
+.stats-podium-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.podium-card {
+  padding: 1.2rem;
+  min-width: 0;
+}
+.podium-card h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+}
+.podium-entry {
+  min-width: 0;
+  text-align: center;
+}
+.podium-record {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+.podium-record small {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.podium-fish {
+  width: 100%;
+  max-width: 120px;
+  height: 82px;
+  object-fit: contain;
+}
+.podium-fish-placeholder {
+  height: 82px;
+  display: grid;
+  place-items: center;
+  font-size: 2.5rem;
+}
+.podium-step {
+  display: grid;
+  place-items: center;
+  border-radius: 10px 10px 3px 3px;
+  background: #d9e3dc;
+  font-size: 1.8rem;
+}
+.rank-1 .podium-step {
+  height: 112px;
+  background: #efe0a9;
+}
+.rank-2 .podium-step {
+  height: 78px;
+  background: #d9e3dc;
+}
+.rank-3 .podium-step {
+  height: 52px;
+  background: #e0c5ad;
+}
+.podium-empty {
+  display: block;
+  font-size: 0.75rem;
+  padding-bottom: 12px;
+}
+.stats-month-chart {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  align-items: end;
+  min-height: 185px;
+}
+.stats-month {
+  text-align: center;
+  min-width: 0;
+}
+.stats-month > div {
+  background: var(--leaf);
+  border-radius: 8px 8px 2px 2px;
+  margin-block: 4px;
+}
+.stats-month small {
+  font-size: 0.7rem;
+}
+.stats-places-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.stats-place-card {
+  overflow: hidden;
+  min-width: 0;
+}
+.stats-place-image,
+.stats-place-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  height: auto;
+  object-fit: cover;
+}
+.stats-place-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  font-size: 0.9rem;
+}
+.stats-place-card > div:not(.stats-place-placeholder) {
+  padding: 1rem;
+}
+.stats-place-card h3 {
+  font-weight: 850;
+  margin: 0;
+}
+.stats-place-card p {
+  margin-block: 8px;
+}
+.lure-image {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: 130px;
+  object-fit: contain;
+  margin: 10px auto;
+}
+.lost-lure-card {
+  padding: 1rem;
+  text-align: center;
+  flex: 0 0 210px;
+}
+.lost-lure-count {
+  display: block;
+  font-size: 1.8rem;
+}
+.lost-lure-card > small {
+  display: block;
+}
+.lure-counter-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.favorite-lure-form {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+.seasonal-month {
+  text-transform: capitalize;
+}
+.seasonal-species-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.seasonal-species-grid > a {
+  padding: 0.8rem;
+}
+.seasonal-notice {
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+@media (max-width: 700px) {
+  .stats-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stats-podium-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stats-places-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stats-month small {
+    font-size: 0.6rem;
+  }
+}
 
 .crop-direction-controls {
   display: grid;

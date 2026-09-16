@@ -54,6 +54,9 @@ model User {
   places         FishingPlace[]
   avatarImageId  String?        @unique
   avatarImage    StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
+  lostLures      Int            @default(0)
+  favoriteLureImageId String?    @unique
+  favoriteLureImage StoredImage? @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
 }
 
 model Session {
@@ -135,6 +138,7 @@ model StoredImage {
   sizeBytes      Int
   createdAt      DateTime      @default(now())
   userAvatar     User?         @relation("UserAvatar")
+  userFavoriteLure User?       @relation("UserFavoriteLure")
   speciesCatalog Species?      @relation("SpeciesCatalogImage")
   speciesDetail  Species?      @relation("SpeciesDetailImage")
   placeImage     FishingPlace? @relation("PlaceImage")

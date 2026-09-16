@@ -1,226 +1,246 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { APP_TIME_ZONE, monthInAppTimeZone } from "@/lib/date";
+import { requireUser } from "@/lib/auth";
+import { monthInAppTimeZone } from "@/lib/date";
+import { mostCaughtSpecies } from "@/lib/statistics";
+import { StatisticsPodium } from "@/components/statistics-podium";
+import { LureImage } from "@/components/lure-image";
+import { SubmitButton } from "@/components/submit-button";
+import { changeLostLuresAction } from "@/app/actions/lures";
+
+export const metadata = { title: "Estadísticas" };
 
 export default async function Stats() {
-  const [species, catches, users, places] = await Promise.all([
-    prisma.species.findMany({ where: { archivedAt: null } }),
+  const actor = await requireUser();
+  const [speciesCount, catches, users, places] = await Promise.all([
+    prisma.species.count({ where: { archivedAt: null } }),
     prisma.catch.findMany({
       where: { deletedAt: null },
       include: { species: true, fisher: true },
+      orderBy: [{ caughtAt: "desc" }, { id: "asc" }],
     }),
-    prisma.user.findMany({ where: { active: true } }),
+    prisma.user.findMany({
+      where: { active: true },
+      orderBy: { displayName: "asc" },
+    }),
     prisma.fishingPlace.findMany({
       where: { archivedAt: null },
       include: {
-        placeImage: true,
-        _count: { select: { catches: { where: { deletedAt: null } } } },
+        catches: {
+          where: { deletedAt: null },
+          include: { species: { select: { id: true, commonName: true } } },
+        },
       },
     }),
   ]);
   const unique = new Set(catches.map((item) => item.speciesId)).size;
-  const counts = new Map<string, { name: string; count: number }>();
-  for (const item of catches)
-    counts.set(item.speciesId, {
-      name: item.species.commonName,
-      count: (counts.get(item.speciesId)?.count ?? 0) + 1,
-    });
-  const most = [...counts.values()].sort((a, b) => b.count - a.count)[0];
-  const longest = [...catches].sort(
-    (a, b) => Number(b.lengthCm) - Number(a.lengthCm),
-  )[0];
-  const heaviest = [...catches]
-    .filter((item) => item.weightG)
-    .sort((a, b) => Number(b.weightG) - Number(a.weightG))[0];
+  const most = mostCaughtSpecies(catches);
+  const longest = [...catches]
+    .sort((a, b) => Number(b.lengthCm) - Number(a.lengthCm))
+    .slice(0, 3);
+  const heaviest = catches
+    .filter((item) => item.weightG !== null)
+    .sort((a, b) => Number(b.weightG) - Number(a.weightG))
+    .slice(0, 3);
   const byMonth = Array.from(
     { length: 12 },
     (_, month) =>
       catches.filter((item) => monthInAppTimeZone(item.caughtAt) === month)
         .length,
   );
-  // La página es dinámica y refleja el mes real de la consulta.
-  const now = new Date();
-  const currentMonth = Number(
-    new Intl.DateTimeFormat("en", {
-      month: "numeric",
-      timeZone: APP_TIME_ZONE,
-    }).format(now),
-  );
-  const monthName = new Intl.DateTimeFormat("es-ES", {
-    month: "long",
-    timeZone: APP_TIME_ZONE,
-  }).format(now);
-  const seasonalSpecies = species
-    .filter((item) => item.activeMonths.includes(currentMonth))
+  const peakMonth = Math.max(1, ...byMonth);
+  const topPlaces = places
+    .filter((place) => place.catches.length > 0)
     .sort(
       (a, b) =>
-        (a.difficulty ?? 99) - (b.difficulty ?? 99) ||
-        a.commonName.localeCompare(b.commonName, "es"),
-    );
+        b.catches.length - a.catches.length ||
+        a.name.localeCompare(b.name, "es"),
+    )
+    .slice(0, 3);
+  const lureUsers = [...users].sort(
+    (a, b) =>
+      b.lostLures - a.lostLures ||
+      a.displayName.localeCompare(b.displayName, "es"),
+  );
+  const recordData = (item: (typeof catches)[number], weight = false) => ({
+    id: item.id,
+    speciesName: item.species.commonName,
+    catalogImageId: item.species.catalogImageId,
+    fisherName: item.fisher.displayName,
+    value: Number(weight ? item.weightG : item.lengthCm),
+  });
+
   return (
     <>
       <h1>Lo que llevamos vivido</h1>
-      <section
-        className="card"
-        style={{
-          padding: "1.2rem",
-          marginBottom: 16,
-          background: "linear-gradient(145deg,#f0faed,#dff3df)",
-        }}
-      >
-        <h2 className="stats-section-title" style={{ margin: 0 }}>
-          Especies de mayor actividad actualmente
-        </h2>
-        <p style={{ margin: "6px 0 0", textTransform: "capitalize" }}>
-          Actividad biológica · {monthName}
-        </p>
-        {seasonalSpecies.length ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))",
-              gap: 8,
-            }}
-          >
-            {seasonalSpecies.map((item) => (
-              <Link
-                href={`/especies/${item.slug}`}
-                key={item.id}
-                style={{
-                  padding: ".8rem",
-                  borderRadius: 14,
-                  background: "#ffffffc9",
-                }}
-              >
-                <b>{item.commonName}</b>
-                <br />
-                <i>{item.scientificName}</i>
-                <br />
-                <small>
-                  {item.waterType === "FRESHWATER"
-                    ? "Agua dulce"
-                    : item.waterType === "SALTWATER"
-                      ? "Agua salada"
-                      : "Agua salobre"}
-                  {item.difficulty ? ` · dificultad ${item.difficulty}/5` : ""}
-                </small>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p>No hay especies con meses de actividad revisados para este mes.</p>
-        )}
-        <aside style={{ marginTop: 12, fontSize: ".9rem" }}>
-          La actividad indica cuándo suele ser más fácil localizar una especie,
-          pero no confirma que su pesca esté permitida. Consulta la normativa,
-          vedas y restricciones vigentes antes de pescar.
-        </aside>
-      </section>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-          gap: 12,
-        }}
-      >
-        {[
-          ["Especies", `${unique} / ${species.length}`],
-          [
-            "Completado",
-            species.length
-              ? `${Math.round((unique / species.length) * 100)}%`
-              : "0%",
-          ],
-          ["Capturas", catches.length],
-          ["Más recordada", most?.name ?? "—"],
-        ].map(([label, value]) => (
-          <section
-            className="card"
-            style={{ padding: "1.2rem" }}
-            key={String(label)}
-          >
-            <small>{label}</small>
-            <div style={{ fontSize: "1.7rem", fontWeight: 850 }}>{value}</div>
-          </section>
-        ))}
-      </div>
-      <h2 className="stats-section-title">Pescadores</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        {users.map((user) => (
-          <Link
-            className="button secondary"
-            href={`/pescadores/${user.id}`}
-            key={user.id}
-          >
-            {user.displayName}:{" "}
-            {catches.filter((item) => item.fisherId === user.id).length}
-          </Link>
-        ))}
-      </div>
-      <h2 className="stats-section-title">Récords conjuntos</h2>
-      <p>
-        Longitud:{" "}
-        {longest
-          ? `${Number(longest.lengthCm)} cm · ${longest.species.commonName} (${longest.fisher.displayName})`
-          : "—"}
-      </p>
-      <p>
-        Peso:{" "}
-        {heaviest
-          ? `${Number(heaviest.weightG)} g · ${heaviest.species.commonName} (${heaviest.fisher.displayName})`
-          : "—"}
-      </p>
-      <h2 className="stats-section-title">Capturas por mes</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(12,minmax(0,1fr))",
-          gap: 4,
-          alignItems: "end",
-          minHeight: 170,
-        }}
-      >
-        {byMonth.map((count, index) => (
-          <div key={index} style={{ textAlign: "center" }}>
-            <div
-              title={`${count} capturas`}
-              style={{
-                height: `${Math.max(8, count * 18)}px`,
-                background: "#4f946f",
-                borderRadius: "8px 8px 2px 2px",
-              }}
-            />
-            <small>{index + 1}</small>
-          </div>
-        ))}
-      </div>
-      <h2 className="stats-section-title">Lugares con más capturas</h2>
-      {places
-        .sort((a, b) => b._count.catches - a._count.catches)
-        .slice(0, 5)
-        .map((place) => (
-          <p key={place.id}>
+      <section className="stats-section">
+        <h2 className="stats-section-title">Pescadores</h2>
+        <div className="stats-horizontal-row">
+          {users.map((user) => (
             <Link
-              className="place-preview-link"
-              href={`/mapa?place=${place.id}`}
+              className="card fisher-stat-card"
+              href={`/pescadores/${user.id}`}
+              key={user.id}
             >
-              {place.name}
-              {place.placeImageId && (
-                <span className="place-preview">
-                  <Image
-                    unoptimized
-                    src={`/api/assets/${place.placeImageId}?size=thumb`}
-                    alt={place.name}
-                    width={260}
-                    height={180}
-                  />
+              {user.avatarImageId ? (
+                <Image
+                  unoptimized
+                  src={`/api/assets/${user.avatarImageId}?size=thumb`}
+                  alt=""
+                  width={48}
+                  height={48}
+                  className="fisher-stat-avatar"
+                />
+              ) : (
+                <span className="fisher-stat-avatar avatar-initial">
+                  {user.displayName.slice(0, 1).toUpperCase()}
                 </span>
               )}
+              <span>
+                <b>{user.displayName}</b>
+                <small>
+                  {catches.filter((item) => item.fisherId === user.id).length}{" "}
+                  peces capturados
+                </small>
+              </span>
             </Link>
-            : {place._count.catches}
-          </p>
+          ))}
+        </div>
+      </section>
+      <div className="stats-summary-grid">
+        {[
+          ["Especies", `${unique} / ${speciesCount}`],
+          [
+            "Completado",
+            speciesCount
+              ? `${Math.round((unique / speciesCount) * 100)}%`
+              : "0%",
+          ],
+          ["Capturas", String(catches.length)],
+          ["Más pescada", most?.name ?? "—"],
+        ].map(([label, value]) => (
+          <article className="card stats-summary-card" key={label}>
+            <small>{label}</small>
+            <strong>{value}</strong>
+          </article>
         ))}
+      </div>
+      <section className="stats-section">
+        <h2 className="stats-section-title">Podios de récords</h2>
+        <div className="stats-podium-grid">
+          <StatisticsPodium
+            records={longest.map((item) => recordData(item))}
+            metric="Longitud"
+            unit="cm"
+          />
+          <StatisticsPodium
+            records={heaviest.map((item) => recordData(item, true))}
+            metric="Peso"
+            unit="g"
+          />
+        </div>
+      </section>
+      <section className="stats-section">
+        <h2 className="stats-section-title">Capturas por mes</h2>
+        <div className="stats-month-chart">
+          {byMonth.map((count, index) => (
+            <div key={index} className="stats-month">
+              <small>{count}</small>
+              <div
+                title={`${count} capturas`}
+                style={{
+                  height: `${Math.max(6, (count / peakMonth) * 140)}px`,
+                }}
+              />
+              <small>
+                {
+                  [
+                    "Ene",
+                    "Feb",
+                    "Mar",
+                    "Abr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Ago",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dic",
+                  ][index]
+                }
+              </small>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="stats-section">
+        <h2 className="stats-section-title">Lugares con más capturas</h2>
+        <div className="stats-places-grid">
+          {topPlaces.map((place) => (
+            <Link
+              className="card stats-place-card"
+              href={`/mapa?place=${place.id}`}
+              key={place.id}
+            >
+              {place.placeImageId ? (
+                <Image
+                  unoptimized
+                  src={`/api/assets/${place.placeImageId}`}
+                  alt={place.name}
+                  width={480}
+                  height={300}
+                  className="stats-place-image"
+                />
+              ) : (
+                <div className="stats-place-placeholder">
+                  Sin foto del lugar
+                </div>
+              )}
+              <div>
+                <h3>{place.name}</h3>
+                <p>
+                  <b>{place.catches.length}</b> capturas
+                </p>
+                <small>
+                  Especie más capturada:{" "}
+                  <b>{mostCaughtSpecies(place.catches)?.name ?? "—"}</b>
+                </small>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {!topPlaces.length && <p>Todavía no hay lugares con capturas.</p>}
+      </section>
+      <section className="stats-section" id="senuelos-perdidos">
+        <h2 className="stats-section-title">Señuelos perdidos</h2>
+        <div className="stats-horizontal-row">
+          {lureUsers.map((user) => (
+            <article className="card lost-lure-card" key={user.id}>
+              <Link href={`/pescadores/${user.id}`}>
+                <b>{user.displayName}</b>
+                <LureImage
+                  imageId={user.favoriteLureImageId}
+                  alt={`Señuelo favorito de ${user.displayName}`}
+                />
+              </Link>
+              <strong className="lost-lure-count">{user.lostLures}</strong>
+              <small>señuelos perdidos</small>
+              {user.id === actor.id && (
+                <div className="lure-counter-actions">
+                  <form action={changeLostLuresAction.bind(null, 1)}>
+                    <SubmitButton>+1</SubmitButton>
+                  </form>
+                  <form action={changeLostLuresAction.bind(null, -1)}>
+                    <SubmitButton disabled={user.lostLures === 0}>−1</SubmitButton>
+                  </form>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

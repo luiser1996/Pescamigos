@@ -8,7 +8,7 @@ const items = [
   { href: "/catalogo", label: "Catálogo", Icon: Fish },
   { href: "/capturas", label: "Recuerdos", Icon: BookOpen },
   { href: "/mapa", label: "Mapa", Icon: Map },
-  { href: "/estadisticas", label: "Datos", Icon: ChartNoAxesColumn },
+  { href: "/estadisticas", label: "Estadísticas", Icon: ChartNoAxesColumn },
 ];
 
 function isActive(pathname: string, href: string) {

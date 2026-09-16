@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { removeSavedPhoto, saveCroppedCapture, savePhoto } from "@/lib/storage";
 import { dateFromLocalForm } from "@/lib/date";
+import { imageErrorMessage } from "@/lib/upload-errors";
 import {
   canEditCatch,
   catchEditSchema,
@@ -106,6 +107,7 @@ export async function createCatchAction(formData: FormData) {
     .filter((item): item is File => item instanceof File && item.size > 0)
     .slice(0, 5);
   const saved: SavedPhoto[] = [];
+  let processingPhoto = "Foto principal";
   try {
     saved.push(
       await saveCroppedCapture(
@@ -115,23 +117,31 @@ export async function createCatchAction(formData: FormData) {
         Number(formData.get("photoCropZoom") ?? 1),
       ),
     );
-    for (const file of extras) saved.push(await savePhoto(file));
+    for (const [index, file] of extras.entries()) {
+      processingPhoto = `Foto adicional ${index + 1} (${file.name.slice(0, 120)})`;
+      saved.push(await savePhoto(file));
+    }
   } catch (error) {
     console.error("catch_photo_processing_failed", {
       userId: user.id,
+      processingPhoto,
       primaryBytes: photo.size,
       extraBytes: extras.map((file) => file.size),
       reason: safeImageError(error),
     });
-    await removeSavedPhoto(
+    await cleanupPhotos(
       saved.flatMap((file) => [
         file.originalPath,
         file.webPath,
         file.thumbnailPath,
       ]),
+      { userId: user.id, phase: "photo_processing" },
     );
     redirect(
-      errorUrl("/capturas/nueva", `Foto principal: ${safeImageError(error)}`),
+      errorUrl(
+        "/capturas/nueva",
+        `${processingPhoto}: ${imageErrorMessage(error)}`,
+      ),
     );
   }
   let itemId: string;
@@ -214,8 +224,14 @@ export async function updateCatchAction(id: string, formData: FormData) {
     ...extras,
   ].filter((file): file is File => file !== null);
   const saved: SavedPhoto[] = [];
+  let processingPhoto = "Fotografía";
   try {
     for (const [index, file] of files.entries()) {
+      const isPrimary =
+        index === 0 && primary instanceof File && primary.size > 0;
+      processingPhoto = isPrimary
+        ? "Foto principal"
+        : `Foto adicional ${index + (primary instanceof File && primary.size > 0 ? 0 : 1)} (${file.name.slice(0, 120)})`;
       saved.push(
         index === 0 && primary instanceof File && primary.size > 0
           ? await saveCroppedCapture(
@@ -231,20 +247,22 @@ export async function updateCatchAction(id: string, formData: FormData) {
     console.error("catch_photo_update_failed", {
       userId: actor.id,
       catchId: id,
+      processingPhoto,
       fileBytes: files.map((file) => file.size),
       reason: safeImageError(error),
     });
-    await removeSavedPhoto(
+    await cleanupPhotos(
       saved.flatMap((file) => [
         file.originalPath,
         file.webPath,
         file.thumbnailPath,
       ]),
+      { userId: actor.id, catchId: id, phase: "photo_update_processing" },
     );
     redirect(
       errorUrl(
         `/capturas/${id}/editar`,
-        `Fotografía: ${safeImageError(error)}`,
+        `${processingPhoto}: ${imageErrorMessage(error)}`,
       ),
       RedirectType.replace,
     );

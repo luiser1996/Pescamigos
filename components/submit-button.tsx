@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-export function SubmitButton({ children }: { children: React.ReactNode }) {
+export function SubmitButton({
+  children,
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [processing, setProcessing] = useState(false);
@@ -29,7 +35,11 @@ export function SubmitButton({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <button ref={buttonRef} className="button" disabled={pending || processing}>
+    <button
+      ref={buttonRef}
+      className="button"
+      disabled={disabled || pending || processing}
+    >
       {processing ? "Preparando fotos…" : pending ? "Guardando…" : children}
     </button>
   );

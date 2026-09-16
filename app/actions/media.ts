@@ -3,6 +3,7 @@
 import { redirect, RedirectType } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { imageErrorMessage } from "@/lib/upload-errors";
 import {
   removeSavedPhoto,
   saveCroppedAvatar,
@@ -99,4 +100,46 @@ export async function updatePlaceImageAction(id: string, data: FormData) {
     data: { placeImageId: image.id },
   });
   redirect(`/admin/lugares/${id}?image=1`, RedirectType.replace);
+}
+
+export async function updateFavoriteLureAction(data: FormData) {
+  const user = await requireUser();
+  const file = data.get("favoriteLure");
+  const profile = `/pescadores/${user.id}?edit=1`;
+  if (!(file instanceof File) || !file.size)
+    redirect(
+      `${profile}&error=Selecciona+una+foto+del+señuelo`,
+      RedirectType.replace,
+    );
+  let saved: Awaited<ReturnType<typeof saveImageAsset>> | undefined;
+  try {
+    saved = await saveImageAsset(file);
+    const photo = saved;
+    await prisma.$transaction(async (tx) => {
+      const image = await tx.storedImage.create({ data: photo });
+      await tx.user.update({
+        where: { id: user.id },
+        data: { favoriteLureImageId: image.id },
+      });
+    });
+  } catch (error) {
+    console.error("favorite_lure_upload_failed", {
+      userId: user.id,
+      reason: error instanceof Error ? error.message : "unknown",
+    });
+    if (saved) {
+      await removeSavedPhoto([
+        saved.originalPath,
+        saved.webPath,
+        saved.thumbnailPath,
+      ]).catch((cleanupError) =>
+        console.error("favorite_lure_cleanup_failed", cleanupError),
+      );
+    }
+    redirect(
+      `${profile}&error=${encodeURIComponent(imageErrorMessage(error))}`,
+      RedirectType.replace,
+    );
+  }
+  redirect(`${profile}&lure=1`, RedirectType.replace);
 }

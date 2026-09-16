@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CatalogSelector } from "@/components/catalog-selector";
 import { FilterPanel } from "@/components/filter-panel";
+import { SeasonalSpecies } from "@/components/seasonal-species";
 export default async function Catalog({
   searchParams,
 }: {
@@ -128,6 +129,7 @@ export default async function Catalog({
           <button className="button">Filtrar</button>
         </form>
       </FilterPanel>
+      <SeasonalSpecies />
       {["FRESHWATER", "SALTWATER"].map((w) => (
         <section key={w}>
           <h2>{w === "FRESHWATER" ? "Agua dulce" : "Agua salada"}</h2>

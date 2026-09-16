@@ -1,6 +1,5 @@
 const TARGET_BYTES = 2 * 1024 * 1024;
 const MAX_EDGE = 2560;
-const PASSTHROUGH_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 type DecodedImage = {
   source: CanvasImageSource;
@@ -61,7 +60,11 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
 }
 
 export async function optimizeImageFile(file: File) {
-  const decoded = await decodeImage(file);
+  const decoded = await decodeImage(file).catch(() => {
+    throw new Error(
+      `No se pudo abrir «${file.name.slice(0, 120)}». Exporta la foto como JPEG o PNG y vuelve a seleccionarla.`,
+    );
+  });
   try {
     const initialScale = Math.min(
       1,
@@ -69,13 +72,6 @@ export async function optimizeImageFile(file: File) {
     );
     let width = Math.max(1, Math.round(decoded.width * initialScale));
     let height = Math.max(1, Math.round(decoded.height * initialScale));
-    if (
-      PASSTHROUGH_TYPES.has(file.type) &&
-      file.size <= TARGET_BYTES &&
-      Math.max(decoded.width, decoded.height) <= MAX_EDGE
-    )
-      return file;
-
     let quality = 0.84;
     let result: Blob | undefined;
 
@@ -90,6 +86,8 @@ export async function optimizeImageFile(file: File) {
       context.imageSmoothingQuality = "high";
       context.drawImage(decoded.source, 0, 0, width, height);
       result = await canvasToBlob(canvas, quality);
+      canvas.width = 1;
+      canvas.height = 1;
       if (result.size <= TARGET_BYTES) break;
       if (quality > 0.54) quality -= 0.1;
       else {
@@ -100,8 +98,14 @@ export async function optimizeImageFile(file: File) {
     if (!result || result.size > TARGET_BYTES)
       throw new Error("No se ha podido reducir la imagen a un tamaño seguro");
     const baseName = file.name.replace(/\.[^.]+$/, "") || "imagen";
-    return new File([result], `${baseName}.webp`, {
-      type: "image/webp",
+    const extension =
+      result.type === "image/png"
+        ? "png"
+        : result.type === "image/jpeg"
+          ? "jpg"
+          : "webp";
+    return new File([result], `${baseName}.${extension}`, {
+      type: result.type,
       lastModified: file.lastModified,
     });
   } finally {

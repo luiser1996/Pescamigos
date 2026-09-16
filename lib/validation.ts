@@ -53,6 +53,7 @@ export const catchEditSchema = catchSchema
   .omit({ idempotencyKey: true, placeId: true })
   .extend({
     placeId: z.string().min(1),
+    weightG: catchSchema.shape.weightG.transform((value) => value ?? null),
   });
 
 export const canEditCatch = (
