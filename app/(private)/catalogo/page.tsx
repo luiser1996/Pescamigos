@@ -4,7 +4,8 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CatalogSelector } from "@/components/catalog-selector";
 import { FilterPanel } from "@/components/filter-panel";
-import { SeasonalSpecies } from "@/components/seasonal-species";
+import { monthInAppTimeZone } from "@/lib/date";
+import { sortCatalog } from "@/lib/catalog-filters";
 export default async function Catalog({
   searchParams,
 }: {
@@ -13,10 +14,24 @@ export default async function Catalog({
     q?: string;
     agua?: string;
     estado?: string;
+    descubierta?: string;
+    activo?: string;
+    orden?: string;
   }>;
 }) {
   const user = await requireUser();
   const p = await searchParams;
+  const currentMonth = monthInAppTimeZone(new Date()) + 1;
+  const discoveredFilter =
+    p.descubierta ??
+    (p.estado === "caught" ? "yes" : p.estado === "missing" ? "no" : "");
+  const hasFilters = Boolean(
+    p.q?.trim() ||
+    p.agua ||
+    discoveredFilter ||
+    p.activo ||
+    (p.orden && p.orden !== "alphabetical"),
+  );
   const users = await prisma.user.findMany({
     where: { active: true },
     select: { id: true, displayName: true },
@@ -29,9 +44,30 @@ export default async function Catalog({
   const species = await prisma.species.findMany({
     where: {
       archivedAt: null,
-      commonName: p.q ? { contains: p.q, mode: "insensitive" } : undefined,
+      ...(p.q?.trim()
+        ? {
+            OR: [
+              {
+                commonName: {
+                  contains: p.q.trim(),
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                scientificName: {
+                  contains: p.q.trim(),
+                  mode: "insensitive" as const,
+                },
+              },
+            ],
+          }
+        : {}),
       waterType:
-        p.agua === "FRESHWATER" || p.agua === "SALTWATER" ? p.agua : undefined,
+        p.agua === "FRESHWATER" ||
+        p.agua === "SALTWATER" ||
+        p.agua === "BRACKISH"
+          ? p.agua
+          : undefined,
     },
     include: {
       catalogImage: true,
@@ -42,12 +78,17 @@ export default async function Catalog({
     },
     orderBy: { commonName: "asc" },
   });
-  const shown = species.filter((s) =>
-    p.estado === "caught"
-      ? s.catches.length > 0
-      : p.estado === "missing"
-        ? s.catches.length === 0
-        : true,
+  const shown = sortCatalog(
+    species.filter((s) => {
+      if (discoveredFilter === "yes" && !s.catches.length) return false;
+      if (discoveredFilter === "no" && s.catches.length) return false;
+      if (p.activo === "yes" && !s.activeMonths.includes(currentMonth))
+        return false;
+      if (p.activo === "no" && s.activeMonths.includes(currentMonth))
+        return false;
+      return true;
+    }),
+    p.orden,
   );
   const discovered = species.filter((item) => item.catches.length > 0).length;
   const percentage = species.length
@@ -95,15 +136,19 @@ export default async function Catalog({
       </section>
       <FilterPanel label="Buscar y filtrar especies">
         <form
+          key={JSON.stringify(p)}
+          action="/catalogo"
+          method="get"
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))",
+            alignItems: "end",
+            gap: 12,
           }}
         >
           <input type="hidden" name="vista" value={p.vista ?? "mine"} />
-          <label className="field" style={{ flex: "2 1 220px" }}>
-            Buscar
+          <label className="field">
+            Nombre
             <input
               name="q"
               defaultValue={p.q}
@@ -116,23 +161,58 @@ export default async function Catalog({
               <option value="">Todas</option>
               <option value="FRESHWATER">Dulce</option>
               <option value="SALTWATER">Salada</option>
+              <option value="BRACKISH">Salobre</option>
             </select>
           </label>
           <label className="field">
-            Estado
-            <select name="estado" defaultValue={p.estado ?? ""}>
+            Descubierta
+            <select name="descubierta" defaultValue={discoveredFilter}>
               <option value="">Todas</option>
-              <option value="caught">Descubiertas</option>
-              <option value="missing">Sin descubrir</option>
+              <option value="yes">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+          <label className="field">
+            Activo
+            <select name="activo" defaultValue={p.activo ?? ""}>
+              <option value="">Todos</option>
+              <option value="yes">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+          <label className="field">
+            Ordenar por
+            <select name="orden" defaultValue={p.orden ?? "alphabetical"}>
+              <option value="alphabetical">Nombre (A–Z)</option>
+              <option value="difficulty-asc">Dificultad: menos a más</option>
+              <option value="difficulty-desc">Dificultad: más a menos</option>
             </select>
           </label>
           <button className="button">Filtrar</button>
+          {hasFilters && (
+            <Link
+              className="button secondary"
+              href={`/catalogo?vista=${encodeURIComponent(p.vista ?? "mine")}`}
+            >
+              Limpiar filtros
+            </Link>
+          )}
         </form>
+        <small>
+          Activo indica los meses de mayor actividad de la especie, según el mes
+          actual. No equivale a autorización legal para pescar.
+        </small>
       </FilterPanel>
-      <SeasonalSpecies />
-      {["FRESHWATER", "SALTWATER"].map((w) => (
+      {!shown.length && <p>No hay especies que coincidan con los filtros.</p>}
+      {["FRESHWATER", "SALTWATER", "BRACKISH"].map((w) => (
         <section key={w}>
-          <h2>{w === "FRESHWATER" ? "Agua dulce" : "Agua salada"}</h2>
+          <h2>
+            {w === "FRESHWATER"
+              ? "Agua dulce"
+              : w === "SALTWATER"
+                ? "Agua salada"
+                : "Agua salobre"}
+          </h2>
           <div
             style={{
               display: "grid",
