@@ -19,12 +19,16 @@ export async function loginAction(formData: FormData) {
   const ip =
     requestHeaders.get("x-real-ip") ?? forwarded?.at(-1)?.trim() ?? "local";
   const rawCredentials = Object.fromEntries(formData);
-  const rawUsername = String(rawCredentials.username ?? "").trim().toLowerCase();
+  const rawUsername = String(rawCredentials.username ?? "")
+    .trim()
+    .toLowerCase();
   const rawPassword = String(rawCredentials.password ?? "");
   const throttle = await registerLoginAttempt(ip, rawUsername);
   const parsed = credentialsSchema.safeParse(rawCredentials);
   const user = parsed.success
-    ? await prisma.user.findUnique({ where: { username: parsed.data.username } })
+    ? await prisma.user.findUnique({
+        where: { username: parsed.data.username },
+      })
     : null;
   const passwordMatches = await argon2.verify(
     user?.passwordHash ?? dummyPasswordHash,
@@ -109,5 +113,20 @@ export async function updateDisplayNameAction(formData: FormData) {
       RedirectType.replace,
     );
   await prisma.user.update({ where: { id: user.id }, data: { displayName } });
+  redirect(`/pescadores/${user.id}?edit=1&changed=1`, RedirectType.replace);
+}
+
+export async function updateNicknameAction(formData: FormData) {
+  const user = await requireUser();
+  const nickname = String(formData.get("nickname") ?? "").trim();
+  if (nickname.length > 60)
+    redirect(
+      `/pescadores/${user.id}?edit=1&error=El+apodo+no+puede+superar+60+caracteres`,
+      RedirectType.replace,
+    );
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { nickname: nickname || null },
+  });
   redirect(`/pescadores/${user.id}?edit=1&changed=1`, RedirectType.replace);
 }

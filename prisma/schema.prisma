@@ -57,6 +57,7 @@ model User {
   lostLures      Int            @default(0)
   favoriteLureImageId String?    @unique
   favoriteLureName String?
+  nickname String?
   favoriteLureImage StoredImage? @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
 }
 

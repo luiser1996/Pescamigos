@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth";
 import {
   changePasswordAction,
   updateDisplayNameAction,
+  updateNicknameAction,
 } from "@/app/actions/auth";
 import {
   updateAvatarAction,
@@ -158,6 +159,25 @@ export default async function FisherProfile({
               </label>
               <button className="button">Actualizar contraseña</button>
             </form>
+            <form
+              action={updateNicknameAction}
+              style={{ display: "grid", gap: 10, alignContent: "start" }}
+            >
+              <h2>Apodo</h2>
+              <label className="field">
+                Apodo
+                <input
+                  name="nickname"
+                  defaultValue={fisher.nickname ?? ""}
+                  maxLength={60}
+                  placeholder="Por ejemplo, El cucharillas"
+                />
+              </label>
+              <small>
+                Solo se muestra en tu perfil. Déjalo vacío para quitarlo.
+              </small>
+              <SubmitButton>Guardar apodo</SubmitButton>
+            </form>
           </div>
         </section>
       </>
@@ -216,6 +236,18 @@ export default async function FisherProfile({
           <h1 style={{ fontSize: "clamp(2.2rem,5vw,3.4rem)", marginTop: 6 }}>
             {fisher.displayName}
           </h1>
+          {fisher.nickname && (
+            <p
+              style={{
+                margin: "4px 0 0",
+                fontSize: "1.1rem",
+                color: "#52705b",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {fisher.nickname}
+            </p>
+          )}
         </div>
         {actor.id === fisher.id && (
           <Link className="button secondary" href={`/pescadores/${id}?edit=1`}>
