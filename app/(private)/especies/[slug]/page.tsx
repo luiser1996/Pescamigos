@@ -55,13 +55,6 @@ export default async function SpeciesDetail({
   ];
   return (
     <>
-      <p>
-        {item.waterType === "FRESHWATER"
-          ? "Agua dulce"
-          : item.waterType === "SALTWATER"
-            ? "Agua salada"
-            : null}
-      </p>
       <div
         style={{
           display: "flex",
@@ -146,7 +139,7 @@ export default async function SpeciesDetail({
         <p style={{ fontSize: "1.08rem", lineHeight: 1.65 }}>
           {item.description ?? "Información pendiente de revisión."}
         </p>
-        <h2>Ficha de campo</h2>
+        <h2 className="stats-section-title">Ficha de campo</h2>
         <div
           style={{
             display: "grid",
@@ -189,7 +182,7 @@ export default async function SpeciesDetail({
           <Field title="Cebos o señuelos" value={item.baits.join(", ")} />
           <Field title="Curiosidades" value={item.curiosities} />
         </div>
-        <h2>Meses de mayor actividad</h2>
+        <h2 className="stats-section-title">Meses de mayor actividad</h2>
         <div
           style={{
             display: "grid",
@@ -213,7 +206,7 @@ export default async function SpeciesDetail({
             </span>
           ))}
         </div>
-        <h2>Conservación y normativa</h2>
+        <h2 className="stats-section-title">Conservación y normativa</h2>
         <div style={{ display: "grid", gap: 8 }}>
           <Field title="Conservación" value={item.conservationStatus} />
           <Field
@@ -240,7 +233,9 @@ export default async function SpeciesDetail({
           autorización legal.
         </aside>
       </section>
-      <h2>Mejores capturas ({item.catches.length} en total)</h2>
+      <h2 className="stats-section-title">
+        Mejores capturas ({item.catches.length} en total)
+      </h2>
       {item.catches.length === 0 && (
         <p className="card" style={{ padding: "1rem" }}>
           Todavía no hay capturas de esta especie.

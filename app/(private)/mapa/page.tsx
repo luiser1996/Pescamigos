@@ -1,4 +1,5 @@
 import { CatchMap } from "@/components/catch-map";
+import Link from "next/link";
 import { FilterPanel } from "@/components/filter-panel";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/date";
@@ -44,7 +45,9 @@ export default async function MapPage({
     where: {
       archivedAt: null,
       waterType:
-        query.water === "FRESHWATER" || query.water === "SALTWATER"
+        query.water === "FRESHWATER" ||
+        query.water === "SALTWATER" ||
+        query.water === "BRACKISH"
           ? query.water
           : undefined,
       catches: { some: catchFilter },
@@ -69,10 +72,14 @@ export default async function MapPage({
       <h1>Mapa de recuerdos</h1>
       <FilterPanel label="Filtrar mapa">
         <form
+          key={JSON.stringify(query)}
+          action="/mapa"
+          method="get"
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,170px),1fr))",
+            alignItems: "end",
+            gap: 12,
           }}
         >
           <label className="field">
@@ -103,6 +110,7 @@ export default async function MapPage({
               <option value="">Toda</option>
               <option value="FRESHWATER">Dulce</option>
               <option value="SALTWATER">Salada</option>
+              <option value="BRACKISH">Salobre</option>
             </select>
           </label>
           <label className="field">
@@ -114,6 +122,15 @@ export default async function MapPage({
             <input type="date" name="to" defaultValue={query.to} />
           </label>
           <button className="button">Filtrar</button>
+          {(query.fisher ||
+            query.species ||
+            query.water ||
+            query.from ||
+            query.to) && (
+            <Link className="button secondary" href="/mapa">
+              Limpiar filtros
+            </Link>
+          )}
         </form>
       </FilterPanel>
       {places.length ? (

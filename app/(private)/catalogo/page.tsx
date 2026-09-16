@@ -201,7 +201,9 @@ export default async function Catalog({
       {!shown.length && <p>No hay especies que coincidan con los filtros.</p>}
       {["FRESHWATER", "SALTWATER"].map((w) => (
         <section key={w}>
-          <h2>{w === "FRESHWATER" ? "Agua dulce" : "Agua salada"}</h2>
+          <h2 className="stats-section-title">
+            {w === "FRESHWATER" ? "Agua dulce" : "Agua salada"}
+          </h2>
           <div
             style={{
               display: "grid",
