@@ -56,6 +56,7 @@ model User {
   avatarImage    StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
   lostLures      Int            @default(0)
   favoriteLureImageId String?    @unique
+  favoriteLureName String?
   favoriteLureImage StoredImage? @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
 }
 

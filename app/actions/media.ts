@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect, RedirectType } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { imageErrorMessage } from "@/lib/upload-errors";
@@ -106,20 +107,26 @@ export async function updateFavoriteLureAction(data: FormData) {
   const user = await requireUser();
   const file = data.get("favoriteLure");
   const profile = `/pescadores/${user.id}?edit=1`;
-  if (!(file instanceof File) || !file.size)
+  const name = String(data.get("favoriteLureName") ?? "").trim();
+  if (!name || name.length > 100)
     redirect(
-      `${profile}&error=Selecciona+una+foto+del+señuelo`,
+      `${profile}&error=Introduce+un+nombre+de+señuelo+de+hasta+100+caracteres`,
       RedirectType.replace,
     );
   let saved: Awaited<ReturnType<typeof saveImageAsset>> | undefined;
   try {
-    saved = await saveImageAsset(file);
+    if (file instanceof File && file.size) saved = await saveImageAsset(file);
     const photo = saved;
     await prisma.$transaction(async (tx) => {
-      const image = await tx.storedImage.create({ data: photo });
+      const image = photo
+        ? await tx.storedImage.create({ data: photo })
+        : undefined;
       await tx.user.update({
         where: { id: user.id },
-        data: { favoriteLureImageId: image.id },
+        data: {
+          favoriteLureName: name,
+          ...(image ? { favoriteLureImageId: image.id } : {}),
+        },
       });
     });
   } catch (error) {
@@ -141,5 +148,7 @@ export async function updateFavoriteLureAction(data: FormData) {
       RedirectType.replace,
     );
   }
+  revalidatePath(`/pescadores/${user.id}`);
+  revalidatePath("/estadisticas");
   redirect(`${profile}&lure=1`, RedirectType.replace);
 }

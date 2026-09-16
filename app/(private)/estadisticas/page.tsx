@@ -224,6 +224,7 @@ export default async function Stats() {
                   imageId={user.favoriteLureImageId}
                   alt={`Señuelo favorito de ${user.displayName}`}
                 />
+                <small>{user.favoriteLureName ?? "Señuelo estándar"}</small>
               </Link>
               <strong className="lost-lure-count">{user.lostLures}</strong>
               <small>señuelos perdidos</small>
@@ -233,7 +234,9 @@ export default async function Stats() {
                     <SubmitButton>+1</SubmitButton>
                   </form>
                   <form action={changeLostLuresAction.bind(null, -1)}>
-                    <SubmitButton disabled={user.lostLures === 0}>−1</SubmitButton>
+                    <SubmitButton disabled={user.lostLures === 0}>
+                      −1
+                    </SubmitButton>
                   </form>
                 </div>
               )}

@@ -97,6 +97,15 @@ export default async function FisherProfile({
               className="favorite-lure-form"
             >
               <h2>Señuelo favorito</h2>
+              <label className="field">
+                Nombre del señuelo
+                <input
+                  name="favoriteLureName"
+                  defaultValue={fisher.favoriteLureName ?? ""}
+                  required
+                  maxLength={100}
+                />
+              </label>
               <LureImage
                 imageId={fisher.favoriteLureImageId}
                 alt="Tu señuelo favorito"
@@ -243,6 +252,9 @@ export default async function FisherProfile({
         </article>
         <article className="card" style={{ padding: "1rem" }}>
           <small>Señuelo favorito</small>
+          <p>
+            <b>{fisher.favoriteLureName ?? "Señuelo estándar"}</b>
+          </p>
           <LureImage
             imageId={fisher.favoriteLureImageId}
             alt={`Señuelo favorito de ${fisher.displayName}`}
