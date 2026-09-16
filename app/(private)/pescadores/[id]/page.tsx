@@ -238,9 +238,11 @@ export default async function FisherProfile({
           {fisher.nickname && (
             <p
               style={{
-                margin: "4px 0 0",
-                fontSize: "1.1rem",
-                color: "#52705b",
+                  margin: "4px 0 0",
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  fontStyle: "italic",
+                  color: "#52705b",
                 overflowWrap: "anywhere",
               }}
             >
