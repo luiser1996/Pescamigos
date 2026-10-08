@@ -6,6 +6,7 @@ import { CatalogSelector } from "@/components/catalog-selector";
 import { FilterPanel } from "@/components/filter-panel";
 import { monthInAppTimeZone } from "@/lib/date";
 import { sortCatalog } from "@/lib/catalog-filters";
+import { RarityBadge } from "@/components/rarity-badge";
 export default async function Catalog({
   searchParams,
 }: {
@@ -239,7 +240,7 @@ export default async function Catalog({
                     )}
                   </div>
                   <h3 style={{ marginBottom: 2, fontWeight: 900 }}>
-                    {s.commonName}
+                    {s.commonName} <RarityBadge rarity={s.rarity} />
                   </h3>
                   <i>{s.scientificName}</i>
                   <p>

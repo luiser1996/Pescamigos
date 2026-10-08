@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { canEditCatch } from "@/lib/validation";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { formatDateTime } from "@/lib/date";
+import { captureRarity, recordIds, scoreCatch } from "@/lib/ranking";
+import { RarityBadge } from "@/components/rarity-badge";
 
 export default async function CatchDetail({
   params,
@@ -27,6 +29,13 @@ export default async function CatchDetail({
     },
   });
   if (!item) notFound();
+  const records = recordIds(
+    await prisma.catch.findMany({
+      where: { deletedAt: null },
+      include: { species: true },
+    }),
+  );
+  const isRecord = records.has(item.id);
   const { saved, updated } = await searchParams;
   const editable = canEditCatch(actor, item.fisherId);
   return (
@@ -43,8 +52,23 @@ export default async function CatchDetail({
             : "Cambios guardados."}
         </p>
       )}
-      <h1>{item.species.commonName}</h1>
-      <section className="card" style={{ padding: "1.5rem" }}>
+      <h1>
+        {item.species.commonName}{" "}
+        <RarityBadge rarity={captureRarity(item)} prefix="Captura " />
+      </h1>
+      <section
+        className="card capture-detail-card"
+        style={{ padding: "1.5rem" }}
+      >
+        {isRecord && (
+          <span
+            className="record-crown detail-crown"
+            title="Récord de la especie"
+            aria-label="Récord de la especie"
+          >
+            ♛
+          </span>
+        )}
         {item.photos.length > 0 && (
           <div style={{ display: "grid", gap: 10 }}>
             {item.photos.map((photo) => (
@@ -96,6 +120,9 @@ export default async function CatchDetail({
           {item.weightG ? `· ${Number(item.weightG)} g` : ""}
         </p>
         <p>{formatDateTime(item.caughtAt)}</p>
+        <p>
+          <b>{scoreCatch(item, isRecord)} RP</b>
+        </p>
         <p>{item.notes}</p>
       </section>
       {editable && (

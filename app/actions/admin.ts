@@ -79,6 +79,8 @@ export async function updateSpeciesAction(id: string, data: FormData) {
       activityTimes: list(data.get("activityTimes")),
       usualDepth: String(data.get("usualDepth") || "") || null,
       difficulty: optionalNumber(data.get("difficulty")),
+      rarity: String(data.get("rarity")) as
+        "COMMON" | "RARE" | "VERY_RARE" | "LEGENDARY",
       techniques: list(data.get("techniques")),
       baits: list(data.get("baits")),
       conservationStatus: String(data.get("conservationStatus") || "") || null,

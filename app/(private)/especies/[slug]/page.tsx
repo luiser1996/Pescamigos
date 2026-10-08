@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { StatisticsPodium } from "@/components/statistics-podium";
+import { RarityBadge } from "@/components/rarity-badge";
 const months = [
   "Ene",
   "Feb",
@@ -71,7 +72,7 @@ export default async function SpeciesDetail({
               fontWeight: 900,
             }}
           >
-            {item.commonName}
+            {item.commonName} <RarityBadge rarity={item.rarity} />
           </h1>
           <i>{item.scientificName}</i>
         </div>

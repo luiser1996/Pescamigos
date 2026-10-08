@@ -8,6 +8,7 @@ import { StatisticsPodium } from "@/components/statistics-podium";
 import { LureImage } from "@/components/lure-image";
 import { SubmitButton } from "@/components/submit-button";
 import { changeLostLuresAction } from "@/app/actions/lures";
+import { ranking, fisherRank } from "@/lib/ranking";
 
 export const metadata = { title: "Estadísticas" };
 
@@ -35,6 +36,14 @@ export default async function Stats() {
     }),
   ]);
   const unique = new Set(catches.map((item) => item.speciesId)).size;
+  const rankingRows = ranking(
+    catches,
+    users.map((user) => user.id),
+  );
+  const rankedUsers = rankingRows.map((row) => ({
+    ...users.find((user) => user.id === row.id)!,
+    ...row,
+  }));
   const most = mostCaughtSpecies(catches);
   const longest = [...catches]
     .sort((a, b) => Number(b.lengthCm) - Number(a.lengthCm))
@@ -77,12 +86,17 @@ export default async function Stats() {
       <section className="stats-section">
         <h2 className="stats-section-title">Pescadores</h2>
         <div className="stats-horizontal-row">
-          {users.map((user) => (
+          {rankedUsers.map((user) => (
             <Link
               className="card fisher-stat-card"
               href={`/pescadores/${user.id}`}
               key={user.id}
             >
+              <span
+                className={`ranking-position ranking-position-${Math.min(user.position, 4)}`}
+              >
+                {user.position}
+              </span>
               {user.avatarImageId ? (
                 <Image
                   unoptimized
@@ -99,6 +113,10 @@ export default async function Stats() {
               )}
               <span>
                 <b>{user.displayName}</b>
+                <small>
+                  RP - {user.points.toLocaleString("es-ES")} · Rango{" "}
+                  {fisherRank(user.points)}
+                </small>
                 <small>
                   {catches.filter((item) => item.fisherId === user.id).length}{" "}
                   peces capturados

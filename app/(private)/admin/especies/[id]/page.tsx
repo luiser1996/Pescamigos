@@ -122,6 +122,15 @@ export default async function EditSpecies({
             <option value="SALTWATER">Salada</option>
           </select>
         </label>
+        <label className="field">
+          Rareza
+          <select name="rarity" defaultValue={item.rarity}>
+            <option value="COMMON">Común</option>
+            <option value="RARE">Raro</option>
+            <option value="VERY_RARE">Muy raro</option>
+            <option value="LEGENDARY">Legendario</option>
+          </select>
+        </label>
         {fields.map(([name, label]) => (
           <label className="field" key={name}>
             {label}

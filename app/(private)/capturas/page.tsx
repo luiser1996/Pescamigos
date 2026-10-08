@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { MemoryFilters } from "@/components/memory-filters";
 import { Pagination } from "@/components/pagination";
 import { formatDate } from "@/lib/date";
+import { captureRarity, recordIds } from "@/lib/ranking";
+import { RarityBadge } from "@/components/rarity-badge";
 
 type Filters = {
   from?: string;
@@ -45,33 +47,39 @@ export default async function Timeline({
         }
       : {}),
   };
-  const [catches, total, species, fishers, places] = await Promise.all([
-    prisma.catch.findMany({
-      where,
-      include: {
-        species: true,
-        fisher: true,
-        place: true,
-        photos: { where: { isPrimary: true }, take: 1 },
-      },
-      orderBy: { caughtAt: filters.order === "asc" ? "asc" : "desc" },
-      skip: (page - 1) * 12,
-      take: 12,
-    }),
-    prisma.catch.count({ where }),
-    prisma.species.findMany({
-      where: { archivedAt: null },
-      orderBy: { commonName: "asc" },
-    }),
-    prisma.user.findMany({
-      where: { active: true },
-      orderBy: { displayName: "asc" },
-    }),
-    prisma.fishingPlace.findMany({
-      where: { archivedAt: null },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const [catches, total, species, fishers, places, allCatches] =
+    await Promise.all([
+      prisma.catch.findMany({
+        where,
+        include: {
+          species: true,
+          fisher: true,
+          place: true,
+          photos: { where: { isPrimary: true }, take: 1 },
+        },
+        orderBy: { caughtAt: filters.order === "asc" ? "asc" : "desc" },
+        skip: (page - 1) * 12,
+        take: 12,
+      }),
+      prisma.catch.count({ where }),
+      prisma.species.findMany({
+        where: { archivedAt: null },
+        orderBy: { commonName: "asc" },
+      }),
+      prisma.user.findMany({
+        where: { active: true },
+        orderBy: { displayName: "asc" },
+      }),
+      prisma.fishingPlace.findMany({
+        where: { archivedAt: null },
+        orderBy: { name: "asc" },
+      }),
+      prisma.catch.findMany({
+        where: { deletedAt: null },
+        include: { species: true },
+      }),
+    ]);
+  const records = recordIds(allCatches);
   const hasFilters = Boolean(
     filters.from ||
     filters.to ||
@@ -111,7 +119,20 @@ export default async function Timeline({
         {catches.map((capture) => {
           const photo = capture.photos[0];
           return (
-            <article className="card" key={capture.id} style={{ padding: 8 }}>
+            <article
+              className="card memory-card"
+              key={capture.id}
+              style={{ padding: 8 }}
+            >
+              {records.has(capture.id) && (
+                <span
+                  className="record-crown"
+                  title="Récord de la especie"
+                  aria-label="Récord de la especie"
+                >
+                  ♛
+                </span>
+              )}
               <Link
                 href={`/capturas/${capture.id}`}
                 style={{ display: "block" }}
@@ -133,8 +154,15 @@ export default async function Timeline({
                 ) : (
                   <div className="fish-placeholder">🐟</div>
                 )}
-                <h2 style={{ fontSize: "1.2rem", margin: ".8rem .5rem .2rem" }}>
-                  {capture.species.commonName}
+                <h2
+                  style={{
+                    fontSize: "1.2rem",
+                    margin: ".8rem .5rem .2rem",
+                    fontWeight: 900,
+                  }}
+                >
+                  {capture.species.commonName}{" "}
+                  <RarityBadge rarity={captureRarity(capture)} />
                 </h2>
               </Link>
               <div style={{ padding: "0 .5rem .6rem" }}>

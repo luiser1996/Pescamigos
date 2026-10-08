@@ -18,6 +18,8 @@ import { ValidatedFileInput } from "@/components/validated-file-input";
 import { SubmitButton } from "@/components/submit-button";
 import { AvatarCropInput } from "@/components/avatar-crop-input";
 import { PasswordInput } from "@/components/password-input";
+import { ranking, fisherRank } from "@/lib/ranking";
+import { RankMedal } from "@/components/rank-medal";
 
 export default async function FisherProfile({
   params,
@@ -46,6 +48,17 @@ export default async function FisherProfile({
     },
   });
   if (!fisher) notFound();
+  const [allCatches, activeUsers] = await Promise.all([
+    prisma.catch.findMany({
+      where: { deletedAt: null },
+      include: { species: true },
+    }),
+    prisma.user.findMany({ where: { active: true }, select: { id: true } }),
+  ]);
+  const rank = ranking(
+    allCatches,
+    activeUsers.map((user) => user.id),
+  ).find((row) => row.id === fisher.id)!;
   const species = new Set(fisher.catches.map((item) => item.speciesId)).size;
   const longest = [...fisher.catches].sort(
     (a, b) => Number(b.lengthCm) - Number(a.lengthCm),
@@ -192,6 +205,14 @@ export default async function FisherProfile({
       {(status.changed || status.avatar || status.lure) && (
         <p role="status">✓ Cambios guardados.</p>
       )}
+      {actor.id === fisher.id && (
+        <Link
+          className="button secondary profile-edit-button"
+          href={`/pescadores/${id}?edit=1`}
+        >
+          Editar perfil
+        </Link>
+      )}
       <div
         style={{
           display: "flex",
@@ -238,11 +259,11 @@ export default async function FisherProfile({
           {fisher.nickname && (
             <p
               style={{
-                  margin: "4px 0 0",
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  fontStyle: "italic",
-                  color: "#52705b",
+                margin: "4px 0 0",
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                fontStyle: "italic",
+                color: "#52705b",
                 overflowWrap: "anywhere",
               }}
             >
@@ -250,11 +271,16 @@ export default async function FisherProfile({
             </p>
           )}
         </div>
-        {actor.id === fisher.id && (
-          <Link className="button secondary" href={`/pescadores/${id}?edit=1`}>
-            Editar perfil
-          </Link>
-        )}
+        <article className="card profile-rank-card">
+          <RankMedal points={rank.points} />
+          <div>
+            <small>Rango de pescador</small>
+            <b>
+              #{rank.position} · {rank.points.toLocaleString("es-ES")} RP
+            </b>
+            <span>Rango {fisherRank(rank.points)}</span>
+          </div>
+        </article>
       </div>
       <div
         style={{

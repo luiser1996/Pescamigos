@@ -175,6 +175,15 @@ export default async function Admin({
                 <option value="BRACKISH">Salobre</option>
               </select>
             </label>
+            <label className="field">
+              Rareza
+              <select name="rarity" defaultValue="COMMON">
+                <option value="COMMON">Común</option>
+                <option value="RARE">Raro</option>
+                <option value="VERY_RARE">Muy raro</option>
+                <option value="LEGENDARY">Legendario</option>
+              </select>
+            </label>
             <button className="button">Guardar lugar</button>
           </form>
         </section>

@@ -72,6 +72,7 @@ export const speciesInputSchema = z.object({
   commonName: z.string().trim().min(2).max(120),
   scientificName: z.string().trim().min(2).max(160),
   waterType: z.enum(["FRESHWATER", "SALTWATER"]),
+  rarity: z.enum(["COMMON", "RARE", "VERY_RARE", "LEGENDARY"]).default("COMMON"),
   description: z.string().trim().max(4000).optional(),
   legalStatus: z.string().trim().max(3000).optional(),
   verificationStatus: z.enum(["PENDING", "VERIFIED", "NEEDS_REVIEW"]),
@@ -88,6 +89,7 @@ const importedPositiveNumber = z.preprocess(
 );
 
 export const speciesImportSchema = speciesInputSchema.extend({
+  rarity: z.enum(["COMMON", "RARE", "VERY_RARE", "LEGENDARY"]).optional(),
   verificationStatus: z
     .enum(["PENDING", "VERIFIED", "NEEDS_REVIEW"])
     .default("PENDING"),

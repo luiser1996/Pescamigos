@@ -23,6 +23,13 @@ enum VerificationStatus {
   NEEDS_REVIEW
 }
 
+enum Rarity {
+  COMMON
+  RARE
+  VERY_RARE
+  LEGENDARY
+}
+
 enum FishingMode {
   SHORE
   BOAT
@@ -40,25 +47,25 @@ enum CatchDisposition {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  username       String         @unique
-  displayName    String
-  passwordHash   String
-  role           Role           @default(MEMBER)
-  active         Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  sessions       Session[]
-  catches        Catch[]        @relation("FisherCatches")
-  createdCatches Catch[]        @relation("CreatedCatches")
-  places         FishingPlace[]
-  avatarImageId  String?        @unique
-  avatarImage    StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
-  lostLures      Int            @default(0)
-  favoriteLureImageId String?    @unique
-  favoriteLureName String?
-  nickname String?
-  favoriteLureImage StoredImage? @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
+  id                  String         @id @default(cuid())
+  username            String         @unique
+  displayName         String
+  passwordHash        String
+  role                Role           @default(MEMBER)
+  active              Boolean        @default(true)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  sessions            Session[]
+  catches             Catch[]        @relation("FisherCatches")
+  createdCatches      Catch[]        @relation("CreatedCatches")
+  places              FishingPlace[]
+  avatarImageId       String?        @unique
+  avatarImage         StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
+  lostLures           Int            @default(0)
+  favoriteLureImageId String?        @unique
+  favoriteLureName    String?
+  nickname            String?
+  favoriteLureImage   StoredImage?   @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
 }
 
 model Session {
@@ -103,6 +110,7 @@ model Species {
   activityTimes         String[]           @default([])
   usualDepth            String?
   difficulty            Int?
+  rarity                Rarity             @default(COMMON)
   techniques            String[]           @default([])
   baits                 String[]           @default([])
   conservationStatus    String?
@@ -130,20 +138,20 @@ model Species {
 }
 
 model StoredImage {
-  id             String        @id @default(cuid())
-  originalPath   String
-  webPath        String
-  thumbnailPath  String
-  mimeType       String
-  width          Int
-  height         Int
-  sizeBytes      Int
-  createdAt      DateTime      @default(now())
-  userAvatar     User?         @relation("UserAvatar")
-  userFavoriteLure User?       @relation("UserFavoriteLure")
-  speciesCatalog Species?      @relation("SpeciesCatalogImage")
-  speciesDetail  Species?      @relation("SpeciesDetailImage")
-  placeImage     FishingPlace? @relation("PlaceImage")
+  id               String        @id @default(cuid())
+  originalPath     String
+  webPath          String
+  thumbnailPath    String
+  mimeType         String
+  width            Int
+  height           Int
+  sizeBytes        Int
+  createdAt        DateTime      @default(now())
+  userAvatar       User?         @relation("UserAvatar")
+  userFavoriteLure User?         @relation("UserFavoriteLure")
+  speciesCatalog   Species?      @relation("SpeciesCatalogImage")
+  speciesDetail    Species?      @relation("SpeciesDetailImage")
+  placeImage       FishingPlace? @relation("PlaceImage")
 }
 
 model SpeciesSource {
