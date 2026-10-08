@@ -56,50 +56,52 @@ h2 {
   text-shadow: 0 1px #fff;
 }
 .rarity-rare {
-  color: #2775cf;
-  animation: rarity-blue-ripple 2.6s ease-in-out infinite;
-}
-.rarity-very-rare {
-  color: #8946c7;
-}
-.rarity-legendary {
-  color: #b88005;
-}
-.rarity-very-rare {
   animation: rarity-shimmer 2.8s linear infinite;
-  background: linear-gradient(100deg, #7134ad 20%, #dcaaff 48%, #7134ad 76%);
+  background: linear-gradient(100deg, #2367b0 20%, #8bc8ff 48%, #2367b0 76%);
   background-size: 220% 100%;
   color: transparent;
   background-clip: text;
 }
+.rarity-very-rare {
+  color: #8946c7;
+  animation: rarity-purple-pulse 1.9s ease-in-out infinite;
+}
 .rarity-legendary {
-  animation: rarity-gold-pulse 1.9s ease-in-out infinite;
+  animation: rarity-legendary-combined 2.2s ease-in-out infinite;
+  background: linear-gradient(100deg, #a86f00 18%, #ffe27a 46%, #c68c09 72%);
+  background-size: 220% 100%;
+  color: transparent;
+  background-clip: text;
 }
 @keyframes rarity-shimmer {
   to {
     background-position: -220% 0;
   }
 }
-@keyframes rarity-blue-ripple {
-  0%,
-  100% {
-    text-shadow: 0 0 0 transparent;
-    transform: translateY(0);
-  }
-  45% {
-    color: #3d91ed;
-    text-shadow: 0 2px 4px #5aa7ef99;
-    transform: translateY(-1px);
-  }
-}
-@keyframes rarity-gold-pulse {
+@keyframes rarity-purple-pulse {
   50% {
-    color: #e0a70d;
+    color: #b86af0;
     filter: brightness(1.25);
     text-shadow:
-      0 0 4px #ffd85a,
-      0 0 10px #d29300;
+      0 0 5px #c48af0,
+      0 0 10px #7134ad;
     transform: scale(1.025);
+  }
+}
+@keyframes rarity-legendary-combined {
+  0%,
+  100% {
+    background-position: 100% 0;
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    background-position: 0 0;
+    filter: brightness(1.3);
+    text-shadow:
+      0 0 5px #ffd85a,
+      0 0 11px #d29300;
+    transform: scale(1.028);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -179,9 +181,9 @@ h2 {
 }
 .fisher-rank-medal {
   display: block;
-  flex: 0 0 100px;
-  width: 100px;
-  height: 164px;
+  flex: 0 0 120px;
+  width: 120px;
+  height: 197px;
   background-image: url("/fisher-ranks.png");
   background-size: 300% 100%;
   background-repeat: no-repeat;
@@ -204,6 +206,32 @@ h2 {
   opacity: 0;
   transition: opacity 0.18s ease;
 }
+.best-catch-card {
+  padding: 1rem;
+  min-width: 0;
+}
+.best-catch-card > small {
+  display: block;
+  margin-bottom: 0.7rem;
+}
+.best-catch-card a {
+  display: grid;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+.best-catch-image,
+.best-catch-placeholder {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.best-catch-card span {
+  font-size: 0.86rem;
+  color: #52705b;
+  font-weight: 800;
+}
 .profile-rank-card:hover .rank-progress-hint,
 .profile-rank-card:focus-within .rank-progress-hint {
   opacity: 1;
@@ -215,9 +243,9 @@ h2 {
     padding: 1rem;
   }
   .fisher-rank-medal {
-    flex-basis: 80px;
-    width: 80px;
-    height: 131px;
+    flex-basis: 100px;
+    width: 100px;
+    height: 164px;
   }
 }
 .stats-section {

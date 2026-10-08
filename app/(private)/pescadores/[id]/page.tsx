@@ -18,7 +18,13 @@ import { ValidatedFileInput } from "@/components/validated-file-input";
 import { SubmitButton } from "@/components/submit-button";
 import { AvatarCropInput } from "@/components/avatar-crop-input";
 import { PasswordInput } from "@/components/password-input";
-import { ranking, fisherRank, nextRankMessage } from "@/lib/ranking";
+import {
+  ranking,
+  fisherRank,
+  nextRankMessage,
+  recordIds,
+  scoreCatch,
+} from "@/lib/ranking";
 import { RankMedal } from "@/components/rank-medal";
 
 export default async function FisherProfile({
@@ -42,7 +48,11 @@ export default async function FisherProfile({
     include: {
       catches: {
         where: { deletedAt: null },
-        include: { species: true, place: true },
+        include: {
+          species: true,
+          place: true,
+          photos: { where: { isPrimary: true }, take: 1 },
+        },
         orderBy: { caughtAt: "desc" },
       },
     },
@@ -59,6 +69,17 @@ export default async function FisherProfile({
     allCatches,
     activeUsers.map((user) => user.id),
   ).find((row) => row.id === fisher.id)!;
+  const records = recordIds(allCatches);
+  const bestCapture = fisher.catches
+    .map((capture) => ({
+      capture,
+      points: scoreCatch(capture, records.has(capture.id)),
+    }))
+    .sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.capture.caughtAt.getTime() - a.capture.caughtAt.getTime(),
+    )[0];
   const species = new Set(fisher.catches.map((item) => item.speciesId)).size;
   const longest = [...fisher.catches].sort(
     (a, b) => Number(b.lengthCm) - Number(a.lengthCm),
@@ -322,6 +343,31 @@ export default async function FisherProfile({
             imageId={fisher.favoriteLureImageId}
             alt={`Señuelo favorito de ${fisher.displayName}`}
           />
+        </article>
+        <article className="card best-catch-card">
+          <small>Mejor captura</small>
+          {bestCapture ? (
+            <Link href={`/capturas/${bestCapture.capture.id}`}>
+              {bestCapture.capture.photos[0] ? (
+                <Image
+                  unoptimized
+                  src={`/api/photos/${bestCapture.capture.photos[0].id}`}
+                  alt={`Mejor captura: ${bestCapture.capture.species.commonName}`}
+                  width={480}
+                  height={320}
+                  className="best-catch-image"
+                />
+              ) : (
+                <div className="fish-placeholder best-catch-placeholder">
+                  🐟
+                </div>
+              )}
+              <b>{bestCapture.capture.species.commonName}</b>
+              <span>{bestCapture.points.toLocaleString("es-ES")} RP</span>
+            </Link>
+          ) : (
+            <p>—</p>
+          )}
         </article>
       </div>
       <h2>Últimos recuerdos</h2>

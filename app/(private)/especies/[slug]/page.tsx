@@ -73,7 +73,7 @@ export default async function SpeciesDetail({
             }}
           >
             {item.commonName}{" "}
-            <RarityBadge rarity={item.rarity} prefix="Rareza: " feminine />
+            <RarityBadge rarity={item.rarity} prefix="Especie " feminine />
           </h1>
           <i>{item.scientificName}</i>
         </div>
