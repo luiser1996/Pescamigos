@@ -54,7 +54,7 @@ export default async function CatchDetail({
       )}
       <h1>
         {item.species.commonName}{" "}
-        <RarityBadge rarity={captureRarity(item)} prefix="Captura " />
+        <RarityBadge rarity={captureRarity(item)} prefix="Captura " feminine />
       </h1>
       <section
         className="card capture-detail-card"

@@ -7,6 +7,12 @@ export const rarityLabels: Record<Rarity, string> = {
   VERY_RARE: "Muy raro",
   LEGENDARY: "Legendario",
 };
+export const feminineRarityLabels: Record<Rarity, string> = {
+  COMMON: "Común",
+  RARE: "Rara",
+  VERY_RARE: "Muy rara",
+  LEGENDARY: "Legendaria",
+};
 const levels: Rarity[] = ["COMMON", "RARE", "VERY_RARE", "LEGENDARY"];
 const number = (value: unknown) => (value == null ? null : Number(value));
 
@@ -32,11 +38,11 @@ export function captureRarity(item: ScoredCatch): Rarity {
   const usualLength = number(item.species.usualSizeCm);
   const maxLength = number(item.species.documentedMaxSizeCm);
   const usualWeight = number(item.species.usualWeightG);
-  const ratios = [
-    usualLength ? length / usualLength : 0,
-    usualWeight && weight ? weight / usualWeight : 0,
-  ];
-  const ratio = Math.max(...ratios);
+  const ratio = usualLength
+    ? length / usualLength
+    : usualWeight && weight
+      ? weight / usualWeight
+      : 0;
   if ((maxLength && length >= maxLength * 0.9) || ratio >= 1.5)
     return "LEGENDARY";
   if (ratio > 1.1) return "VERY_RARE";

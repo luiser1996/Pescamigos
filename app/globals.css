@@ -57,6 +57,7 @@ h2 {
 }
 .rarity-rare {
   color: #2775cf;
+  animation: rarity-blue-ripple 2.6s ease-in-out infinite;
 }
 .rarity-very-rare {
   color: #8946c7;
@@ -79,6 +80,18 @@ h2 {
     background-position: -220% 0;
   }
 }
+@keyframes rarity-blue-ripple {
+  0%,
+  100% {
+    text-shadow: 0 0 0 transparent;
+    transform: translateY(0);
+  }
+  45% {
+    color: #3d91ed;
+    text-shadow: 0 2px 4px #5aa7ef99;
+    transform: translateY(-1px);
+  }
+}
 @keyframes rarity-gold-pulse {
   50% {
     color: #e0a70d;
@@ -91,7 +104,8 @@ h2 {
 }
 @media (prefers-reduced-motion: reduce) {
   .rarity-very-rare,
-  .rarity-legendary {
+  .rarity-legendary,
+  .rarity-rare {
     animation: none;
   }
 }

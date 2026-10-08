@@ -162,7 +162,7 @@ export default async function Timeline({
                   }}
                 >
                   {capture.species.commonName}{" "}
-                  <RarityBadge rarity={captureRarity(capture)} />
+                  <RarityBadge rarity={captureRarity(capture)} feminine />
                 </h2>
               </Link>
               <div style={{ padding: "0 .5rem .6rem" }}>

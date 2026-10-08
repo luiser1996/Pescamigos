@@ -30,6 +30,7 @@ describe("rareza y puntos", () => {
     expect(captureRarity(base({ lengthCm: 45 }))).toBe("RARE");
     expect(captureRarity(base({ lengthCm: 60 }))).toBe("VERY_RARE");
     expect(captureRarity(base({ lengthCm: 91 }))).toBe("LEGENDARY");
+    expect(captureRarity(base({ lengthCm: 30, weightG: 5000 }))).toBe("COMMON");
   });
   it("premia el récord", () =>
     expect(scoreCatch(base(), true) - scoreCatch(base(), false)).toBe(150));
