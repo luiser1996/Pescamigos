@@ -7,7 +7,12 @@ import { prisma } from "@/lib/prisma";
 import { canEditCatch } from "@/lib/validation";
 import { ConfirmSubmit } from "@/components/confirm-submit";
 import { formatDateTime } from "@/lib/date";
-import { captureRarity, recordIds, scoreCatch } from "@/lib/ranking";
+import {
+  captureRarity,
+  scoreBonusesFor,
+  scoreCatch,
+  scoringContext,
+} from "@/lib/ranking";
 import { RarityBadge } from "@/components/rarity-badge";
 
 export default async function CatchDetail({
@@ -29,13 +34,14 @@ export default async function CatchDetail({
     },
   });
   if (!item) notFound();
-  const records = recordIds(
+  const scoring = scoringContext(
     await prisma.catch.findMany({
       where: { deletedAt: null },
       include: { species: true },
     }),
   );
-  const isRecord = records.has(item.id);
+  const bonuses = scoreBonusesFor(item.id, scoring);
+  const isRecord = bonuses.isSpeciesRecord;
   const { saved, updated } = await searchParams;
   const editable = canEditCatch(actor, item.fisherId);
   return (
@@ -121,7 +127,7 @@ export default async function CatchDetail({
         </p>
         <p>{formatDateTime(item.caughtAt)}</p>
         <p>
-          <b>{scoreCatch(item, isRecord)} RP</b>
+          <b>{scoreCatch(item, bonuses)} RP</b>
         </p>
         <p>{item.notes}</p>
       </section>

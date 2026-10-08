@@ -22,8 +22,10 @@ import {
   ranking,
   fisherRank,
   nextRankMessage,
-  recordIds,
+  pointBonuses,
+  scoreBonusesFor,
   scoreCatch,
+  scoringContext,
 } from "@/lib/ranking";
 import { RankMedal } from "@/components/rank-medal";
 
@@ -69,11 +71,11 @@ export default async function FisherProfile({
     allCatches,
     activeUsers.map((user) => user.id),
   ).find((row) => row.id === fisher.id)!;
-  const records = recordIds(allCatches);
+  const scoring = scoringContext(allCatches);
   const bestCapture = fisher.catches
     .map((capture) => ({
       capture,
-      points: scoreCatch(capture, records.has(capture.id)),
+      points: scoreCatch(capture, scoreBonusesFor(capture.id, scoring)),
     }))
     .sort(
       (a, b) =>
@@ -290,21 +292,33 @@ export default async function FisherProfile({
           </Link>
         )}
       </div>
-      <article
-        className="card profile-rank-card"
-        title={nextRankMessage(rank.points)}
-        data-tooltip={nextRankMessage(rank.points)}
-      >
+      <article className="card profile-rank-card">
         <RankMedal points={rank.points} />
-        <div>
+        <div className="profile-rank-copy">
           <small>Rango de pescador</small>
-          <b>
-            #{rank.position} · {rank.points.toLocaleString("es-ES")} RP
-          </b>
+          <span className="rank-points-row">
+            <b>
+              #{rank.position} · {rank.points.toLocaleString("es-ES")} RP
+            </b>
+            <details className="rank-info">
+              <summary aria-label="¿Qué son los RP?">?</summary>
+              <div className="rank-info-panel">
+                <b>¿Qué son los RP?</b>
+                <p>
+                  Son los puntos de rango que consigues con tus capturas. La
+                  rareza, pescar fuera de temporada y los récords aumentan su
+                  valor.
+                </p>
+                <ul>
+                  <li>Primera captura de una especie: +{pointBonuses.firstSpeciesCatch} RP</li>
+                  <li>Récord de una especie: +{pointBonuses.speciesRecord} RP</li>
+                  <li>Récord absoluto de la aplicación: +{pointBonuses.absoluteRecord} RP</li>
+                </ul>
+                <strong>{nextRankMessage(rank.points)}</strong>
+              </div>
+            </details>
+          </span>
           <span>Rango {fisherRank(rank.points)}</span>
-          <small className="rank-progress-hint">
-            {nextRankMessage(rank.points)}
-          </small>
         </div>
       </article>
       <div

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  absoluteRecordIds,
   captureRarity,
+  firstSpeciesCatchIds,
   fisherRank,
   nextRankMessage,
   ranking,
@@ -32,8 +34,25 @@ describe("rareza y puntos", () => {
     expect(captureRarity(base({ lengthCm: 91 }))).toBe("LEGENDARY");
     expect(captureRarity(base({ lengthCm: 30, weightG: 5000 }))).toBe("COMMON");
   });
-  it("premia el récord", () =>
-    expect(scoreCatch(base(), true) - scoreCatch(base(), false)).toBe(150));
+  it("premia el récord de especie", () =>
+    expect(
+      scoreCatch(base(), { isSpeciesRecord: true }) - scoreCatch(base()),
+    ).toBe(150));
+  it("premia la primera captura de una especie", () => {
+    const later = base({ id: "later", caughtAt: new Date("2026-10-09") });
+    expect(firstSpeciesCatchIds([later, base()])).toEqual(new Set(["one"]));
+    expect(
+      scoreCatch(base(), { isFirstSpeciesCatch: true }) - scoreCatch(base()),
+    ).toBe(100);
+  });
+  it("premia el récord absoluto y lo cambia cuando se supera", () => {
+    const former = base({ id: "former", lengthCm: 80, weightG: 2000 });
+    const current = base({ id: "current", lengthCm: 90, weightG: 3000 });
+    expect(absoluteRecordIds([former, current])).toEqual(new Set(["current"]));
+    expect(
+      scoreCatch(current, { isAbsoluteRecord: true }) - scoreCatch(current),
+    ).toBe(250);
+  });
   it("marca empates de récord", () =>
     expect(recordIds([base(), base({ id: "two", fisherId: "dani" })])).toEqual(
       new Set(["one", "two"]),

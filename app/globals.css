@@ -174,7 +174,7 @@ h2 {
   margin-bottom: 28px;
   position: relative;
 }
-.profile-rank-card div {
+.profile-rank-copy {
   display: grid;
   gap: 5px;
   font-size: 1.08rem;
@@ -197,14 +197,59 @@ h2 {
 .fisher-rank-maestro {
   background-position: right center;
 }
-.rank-progress-hint {
+.rank-points-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rank-info {
+  position: relative;
+}
+.rank-info summary {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid #9fcaaa;
+  border-radius: 50%;
+  background: #dff3df;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+.rank-info summary::-webkit-details-marker {
+  display: none;
+}
+.rank-info summary:hover,
+.rank-info summary:focus-visible {
+  background: #cbe8cf;
+}
+.rank-info-panel {
   position: absolute;
-  right: 14px;
-  bottom: 10px;
+  z-index: 20;
+  top: calc(100% + 9px);
+  left: 0;
+  width: min(340px, calc(100vw - 48px));
+  padding: 1rem;
+  border: 1px solid #b8d6bd;
+  border-radius: 14px;
+  background: var(--cream);
+  box-shadow: 0 12px 30px #193c3230;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.rank-info-panel p {
+  margin: 0.55rem 0;
+}
+.rank-info-panel ul {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.2rem;
+}
+.rank-info-panel strong {
   color: #52705b;
-  font-weight: 700;
-  opacity: 0;
-  transition: opacity 0.18s ease;
 }
 .best-catch-card {
   padding: 1rem;
@@ -232,10 +277,6 @@ h2 {
   color: #52705b;
   font-weight: 800;
 }
-.profile-rank-card:hover .rank-progress-hint,
-.profile-rank-card:focus-within .rank-progress-hint {
-  opacity: 1;
-}
 @media (max-width: 600px) {
   .profile-rank-card {
     width: 100%;
@@ -246,6 +287,12 @@ h2 {
     flex-basis: 100px;
     width: 100px;
     height: 164px;
+  }
+  .rank-info-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 .stats-section {

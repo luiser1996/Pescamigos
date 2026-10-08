@@ -32,6 +32,18 @@ export type ScoredCatch = {
   };
 };
 
+export const pointBonuses = {
+  firstSpeciesCatch: 100,
+  speciesRecord: 150,
+  absoluteRecord: 250,
+} as const;
+
+export type ScoreBonuses = {
+  isFirstSpeciesCatch?: boolean;
+  isSpeciesRecord?: boolean;
+  isAbsoluteRecord?: boolean;
+};
+
 export function captureRarity(item: ScoredCatch): Rarity {
   const length = number(item.lengthCm) ?? 0;
   const weight = number(item.weightG);
@@ -70,25 +82,84 @@ export function recordIds(catches: ScoredCatch[]) {
   return result;
 }
 
-export function scoreCatch(item: ScoredCatch, isRecord: boolean) {
+export function firstSpeciesCatchIds(catches: ScoredCatch[]) {
+  const result = new Set<string>();
+  for (const speciesId of new Set(catches.map((c) => c.speciesId))) {
+    const first = catches
+      .filter((c) => c.speciesId === speciesId)
+      .sort(
+        (a, b) =>
+          a.caughtAt.getTime() - b.caughtAt.getTime() ||
+          a.id.localeCompare(b.id),
+      )[0];
+    if (first) result.add(first.id);
+  }
+  return result;
+}
+
+export function absoluteRecordIds(catches: ScoredCatch[]) {
+  const result = new Set<string>();
+  if (!catches.length) return result;
+  const maxLength = Math.max(...catches.map((c) => number(c.lengthCm) ?? 0));
+  const weights = catches
+    .map((c) => number(c.weightG))
+    .filter((value): value is number => value != null);
+  const maxWeight = weights.length ? Math.max(...weights) : null;
+  catches.forEach((item) => {
+    if (
+      number(item.lengthCm) === maxLength ||
+      (maxWeight != null && number(item.weightG) === maxWeight)
+    )
+      result.add(item.id);
+  });
+  return result;
+}
+
+export function scoringContext(catches: ScoredCatch[]) {
+  return {
+    speciesRecords: recordIds(catches),
+    firstSpeciesCatches: firstSpeciesCatchIds(catches),
+    absoluteRecords: absoluteRecordIds(catches),
+  };
+}
+
+export function scoreBonusesFor(
+  itemId: string,
+  context: ReturnType<typeof scoringContext>,
+): ScoreBonuses {
+  return {
+    isFirstSpeciesCatch: context.firstSpeciesCatches.has(itemId),
+    isSpeciesRecord: context.speciesRecords.has(itemId),
+    isAbsoluteRecord: context.absoluteRecords.has(itemId),
+  };
+}
+
+export function scoreCatch(item: ScoredCatch, bonuses: ScoreBonuses = {}) {
   const base = [100, 175, 275, 425][levels.indexOf(item.species.rarity)];
   const multiplier = [1, 1.35, 1.75, 2.4][levels.indexOf(captureRarity(item))];
   const offSeason =
     item.species.activeMonths.length > 0 &&
     !item.species.activeMonths.includes(monthInAppTimeZone(item.caughtAt) + 1);
   return Math.round(
-    base * multiplier + (isRecord ? 150 : 0) + (offSeason ? 40 : 0),
+    base * multiplier +
+      (bonuses.isFirstSpeciesCatch ? pointBonuses.firstSpeciesCatch : 0) +
+      (bonuses.isSpeciesRecord ? pointBonuses.speciesRecord : 0) +
+      (bonuses.isAbsoluteRecord ? pointBonuses.absoluteRecord : 0) +
+      (offSeason ? 40 : 0),
   );
 }
 
 export function ranking(catches: ScoredCatch[], userIds: string[]) {
-  const records = recordIds(catches);
+  const context = scoringContext(catches);
   return userIds
     .map((id) => ({
       id,
       points: catches
         .filter((c) => c.fisherId === id)
-        .reduce((sum, c) => sum + scoreCatch(c, records.has(c.id)), 0),
+        .reduce(
+          (sum, c) => sum + scoreCatch(c, scoreBonusesFor(c.id, context)),
+          0,
+        ),
     }))
     .sort((a, b) => b.points - a.points || a.id.localeCompare(b.id))
     .map((row, index) => ({ ...row, position: index + 1 }));
