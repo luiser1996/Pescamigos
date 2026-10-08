@@ -64,10 +64,10 @@ h2 {
 }
 .rarity-very-rare {
   color: #8946c7;
-  animation: rarity-purple-pulse 1.9s ease-in-out infinite;
+  animation: rarity-purple-pulse 3.8s ease-in-out infinite;
 }
 .rarity-legendary {
-  animation: rarity-legendary-combined 2.2s ease-in-out infinite;
+  animation: rarity-legendary-combined 4.6s ease-in-out infinite;
   background: linear-gradient(100deg, #a86f00 18%, #ffe27a 46%, #c68c09 72%);
   background-size: 220% 100%;
   color: transparent;
