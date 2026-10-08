@@ -8,9 +8,7 @@ export function RarityBadge({
   prefix?: string;
 }) {
   return (
-    <span
-      className={`rarity rarity-${rarity.toLowerCase().replace("_", "-")} ${prefix ? "rarity-prefixed" : ""}`}
-    >
+    <span className={`rarity rarity-${rarity.toLowerCase().replace("_", "-")}`}>
       {prefix}
       {rarityLabels[rarity]}
     </span>

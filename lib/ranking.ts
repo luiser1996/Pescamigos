@@ -37,10 +37,10 @@ export function captureRarity(item: ScoredCatch): Rarity {
     usualWeight && weight ? weight / usualWeight : 0,
   ];
   const ratio = Math.max(...ratios);
-  if ((maxLength && length >= maxLength * 0.9) || ratio >= 1.6)
+  if ((maxLength && length >= maxLength * 0.9) || ratio >= 1.5)
     return "LEGENDARY";
-  if (ratio >= 1.25) return "VERY_RARE";
-  if (ratio >= 1) return "RARE";
+  if (ratio > 1.1) return "VERY_RARE";
+  if (ratio >= 0.9) return "RARE";
   return "COMMON";
 }
 
@@ -89,5 +89,13 @@ export function ranking(catches: ScoredCatch[], userIds: string[]) {
 }
 
 export function fisherRank(points: number) {
-  return points >= 3000 ? "Maestro" : points >= 1000 ? "Alto" : "Bajo";
+  return points >= 10000 ? "Maestro" : points >= 5000 ? "Alto" : "Bajo";
+}
+
+export function nextRankMessage(points: number) {
+  if (points < 5000)
+    return `Faltan ${(5000 - points).toLocaleString("es-ES")} RP para Rango Alto`;
+  if (points < 10000)
+    return `Faltan ${(10000 - points).toLocaleString("es-ES")} RP para Rango Maestro`;
+  return "Has alcanzado el rango máximo";
 }

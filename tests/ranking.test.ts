@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   captureRarity,
   fisherRank,
+  nextRankMessage,
   ranking,
   recordIds,
   scoreCatch,
@@ -26,7 +27,8 @@ const base = (overrides: Partial<ScoredCatch> = {}): ScoredCatch => ({
 describe("rareza y puntos", () => {
   it("clasifica por proporción y máximo documentado", () => {
     expect(captureRarity(base())).toBe("COMMON");
-    expect(captureRarity(base({ lengthCm: 65 }))).toBe("VERY_RARE");
+    expect(captureRarity(base({ lengthCm: 45 }))).toBe("RARE");
+    expect(captureRarity(base({ lengthCm: 60 }))).toBe("VERY_RARE");
     expect(captureRarity(base({ lengthCm: 91 }))).toBe("LEGENDARY");
   });
   it("premia el récord", () =>
@@ -43,8 +45,10 @@ describe("rareza y puntos", () => {
       )[0].id,
     ).toBe("dani"));
   it("aplica los tres rangos", () => {
-    expect(fisherRank(999)).toBe("Bajo");
-    expect(fisherRank(1000)).toBe("Alto");
-    expect(fisherRank(3000)).toBe("Maestro");
+    expect(fisherRank(4999)).toBe("Bajo");
+    expect(fisherRank(5000)).toBe("Alto");
+    expect(fisherRank(10000)).toBe("Maestro");
+    expect(nextRankMessage(4900)).toContain("100 RP");
+    expect(nextRankMessage(10000)).toContain("máximo");
   });
 });

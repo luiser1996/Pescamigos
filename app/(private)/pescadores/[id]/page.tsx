@@ -18,7 +18,7 @@ import { ValidatedFileInput } from "@/components/validated-file-input";
 import { SubmitButton } from "@/components/submit-button";
 import { AvatarCropInput } from "@/components/avatar-crop-input";
 import { PasswordInput } from "@/components/password-input";
-import { ranking, fisherRank } from "@/lib/ranking";
+import { ranking, fisherRank, nextRankMessage } from "@/lib/ranking";
 import { RankMedal } from "@/components/rank-medal";
 
 export default async function FisherProfile({
@@ -205,21 +205,13 @@ export default async function FisherProfile({
       {(status.changed || status.avatar || status.lure) && (
         <p role="status">✓ Cambios guardados.</p>
       )}
-      {actor.id === fisher.id && (
-        <Link
-          className="button secondary profile-edit-button"
-          href={`/pescadores/${id}?edit=1`}
-        >
-          Editar perfil
-        </Link>
-      )}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: 16,
           flexWrap: "wrap",
-          marginBottom: 28,
+          marginBottom: 14,
         }}
       >
         {fisher.avatarImageId ? (
@@ -271,17 +263,29 @@ export default async function FisherProfile({
             </p>
           )}
         </div>
-        <article className="card profile-rank-card">
-          <RankMedal points={rank.points} />
-          <div>
-            <small>Rango de pescador</small>
-            <b>
-              #{rank.position} · {rank.points.toLocaleString("es-ES")} RP
-            </b>
-            <span>Rango {fisherRank(rank.points)}</span>
-          </div>
-        </article>
+        {actor.id === fisher.id && (
+          <Link className="button secondary" href={`/pescadores/${id}?edit=1`}>
+            Editar perfil
+          </Link>
+        )}
       </div>
+      <article
+        className="card profile-rank-card"
+        title={nextRankMessage(rank.points)}
+        data-tooltip={nextRankMessage(rank.points)}
+      >
+        <RankMedal points={rank.points} />
+        <div>
+          <small>Rango de pescador</small>
+          <b>
+            #{rank.position} · {rank.points.toLocaleString("es-ES")} RP
+          </b>
+          <span>Rango {fisherRank(rank.points)}</span>
+          <small className="rank-progress-hint">
+            {nextRankMessage(rank.points)}
+          </small>
+        </div>
+      </article>
       <div
         style={{
           display: "grid",
