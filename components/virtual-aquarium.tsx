@@ -40,6 +40,13 @@ type Motion = {
   behavior: AquariumBehavior;
 };
 
+type DecorationDrag = {
+  id: string;
+  pointerId: number;
+  offsetX: number;
+  offsetY: number;
+};
+
 const SAND_HEIGHT = 53;
 const fishWidth = (lengthCm: number) =>
   Math.min(245, Math.max(36, lengthCm * 2.35));
@@ -74,10 +81,41 @@ export function VirtualAquarium({
 }) {
   const tankRef = useRef<HTMLDivElement>(null);
   const fishRefs = useRef(new Map<string, HTMLButtonElement>());
+  const decorationDrag = useRef<DecorationDrag | null>(null);
+  const decorationDragMoved = useRef(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [decorationPreview, setDecorationPreview] = useState<{
+    id: string;
+    xPct: number;
+    yPct: number;
+  } | null>(null);
   const [spriteScales, setSpriteScales] = useState<Record<string, number>>({});
   const [sparkling, setSparkling] = useState<Set<string>>(() => new Set());
   const activeFish = fish.find((item) => item.id === activeId);
+
+  const decorationPosition = (clientX: number, clientY: number) => {
+    const tank = tankRef.current;
+    const drag = decorationDrag.current;
+    if (!tank || !drag) return null;
+    const bounds = tank.getBoundingClientRect();
+    return {
+      id: drag.id,
+      xPct: Math.max(
+        1,
+        Math.min(
+          99,
+          ((clientX - bounds.left - drag.offsetX) / bounds.width) * 100,
+        ),
+      ),
+      yPct: Math.max(
+        1,
+        Math.min(
+          97,
+          ((clientY - bounds.top - drag.offsetY) / bounds.height) * 100,
+        ),
+      ),
+    };
+  };
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -326,8 +364,8 @@ export function VirtualAquarium({
           className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")} decoration-${item.slug}${editableDecorations ? " editable" : ""}`}
           key={item.id}
           style={{
-            left: `${item.xPct}%`,
-            top: `${item.yPct}%`,
+            left: `${decorationPreview?.id === item.id ? decorationPreview.xPct : item.xPct}%`,
+            top: `${decorationPreview?.id === item.id ? decorationPreview.yPct : item.yPct}%`,
             transform: `translate(-50%, -50%) scale(${item.scale})`,
             zIndex: Math.max(
               1,
@@ -343,20 +381,74 @@ export function VirtualAquarium({
               ),
             ),
           }}
-          draggable={editableDecorations}
           onClick={(event) => {
+            if (decorationDragMoved.current) {
+              decorationDragMoved.current = false;
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             if (
               editableDecorations &&
               !(event.target as HTMLElement).closest("button")
             )
               onSelectDecoration?.(item.id);
           }}
-          onDragStart={(event) =>
-            event.dataTransfer.setData(
-              "application/x-pescamigos-decoration",
-              item.id,
+          onPointerDown={(event) => {
+            if (
+              !editableDecorations ||
+              !event.isPrimary ||
+              event.button !== 0 ||
+              (event.target as HTMLElement).closest("button") ||
+              !tankRef.current
             )
-          }
+              return;
+            event.preventDefault();
+            event.stopPropagation();
+            const bounds = tankRef.current.getBoundingClientRect();
+            decorationDrag.current = {
+              id: item.id,
+              pointerId: event.pointerId,
+              offsetX:
+                event.clientX - bounds.left - (item.xPct / 100) * bounds.width,
+              offsetY:
+                event.clientY - bounds.top - (item.yPct / 100) * bounds.height,
+            };
+            decorationDragMoved.current = false;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            onSelectDecoration?.(item.id);
+          }}
+          onPointerMove={(event) => {
+            const drag = decorationDrag.current;
+            if (!drag || drag.pointerId !== event.pointerId) return;
+            event.preventDefault();
+            const position = decorationPosition(event.clientX, event.clientY);
+            if (!position) return;
+            decorationDragMoved.current = true;
+            setDecorationPreview(position);
+          }}
+          onPointerUp={(event) => {
+            const drag = decorationDrag.current;
+            if (!drag || drag.pointerId !== event.pointerId) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const position = decorationPosition(event.clientX, event.clientY);
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            decorationDrag.current = null;
+            setDecorationPreview(null);
+            if (position && decorationDragMoved.current)
+              onPlaceDecoration?.(position.id, position.xPct, position.yPct);
+            window.setTimeout(() => {
+              decorationDragMoved.current = false;
+            }, 0);
+          }}
+          onPointerCancel={(event) => {
+            if (decorationDrag.current?.pointerId !== event.pointerId) return;
+            decorationDrag.current = null;
+            decorationDragMoved.current = false;
+            setDecorationPreview(null);
+          }}
           title={editableDecorations ? "Seleccionar para recolocar" : undefined}
         >
           <DecorationSprite slug={item.slug} />
