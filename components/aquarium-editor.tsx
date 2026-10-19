@@ -140,7 +140,7 @@ export function AquariumEditor({
               return [
                 ...without,
                 {
-                  ...source,
+                  ...(existing ?? source),
                   xPct,
                   yPct,
                   layer:
