@@ -95,30 +95,6 @@ export default async function Admin({
           Abrir pecera de pruebas
         </Link>
       </section>
-      <section className="card admin-aquarium-entry">
-        <div>
-          <h2>Simulador de forja</h2>
-          <p>
-            Comprueba los resultados de forjar y desmantelar sin modificar
-            inventarios.
-          </p>
-        </div>
-        <Link className="button secondary" href="/admin/forja">
-          Abrir simulador
-        </Link>
-      </section>
-      <section className="card admin-aquarium-entry">
-        <div>
-          <h2>Simulador de cofres</h2>
-          <p>
-            Comprueba la ruleta y sus probabilidades sin gastar cofres ni
-            modificar inventarios.
-          </p>
-        </div>
-        <Link className="button secondary" href="/admin/cofres">
-          Abrir simulador
-        </Link>
-      </section>
       <div
         style={{
           display: "grid",

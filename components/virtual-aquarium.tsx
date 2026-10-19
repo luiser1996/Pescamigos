@@ -323,12 +323,25 @@ export function VirtualAquarium({
       <div className="aquarium-water-light" aria-hidden="true" />
       {decorations.map((item) => (
         <span
-          className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")}${editableDecorations ? " editable" : ""}`}
+          className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")} decoration-${item.slug}${editableDecorations ? " editable" : ""}`}
           key={item.id}
           style={{
             left: `${item.xPct}%`,
             top: `${item.yPct}%`,
             transform: `translate(-50%, -50%) scale(${item.scale})`,
+            zIndex: Math.max(
+              1,
+              Math.round(
+                40 -
+                  ({
+                    COMMON: 7,
+                    RARE: 10,
+                    VERY_RARE: 18,
+                    LEGENDARY: 25,
+                  }[item.rarity] ?? 7) *
+                    item.scale,
+              ),
+            ),
           }}
           draggable={editableDecorations}
           onClick={(event) => {

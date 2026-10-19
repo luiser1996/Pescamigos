@@ -545,6 +545,12 @@ h2 {
 .aquarium-decoration.rarity-decoration-legendary {
   width: clamp(155px, 25vw, 310px);
 }
+.aquarium-decoration.decoration-palacio-de-la-atlantida {
+  width: clamp(190px, 30vw, 380px);
+}
+.aquarium-decoration.decoration-tridente-de-poseidon {
+  width: clamp(110px, 17vw, 210px);
+}
 .aquarium-decoration.editable {
   cursor: grab;
 }
@@ -804,57 +810,6 @@ h2 {
   100% {
     transform: translateX(var(--chest-end-x, -2740px));
   }
-}
-.forge-simulator-controls {
-  display: flex;
-  align-items: end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.segmented-control {
-  display: inline-flex;
-  padding: 4px;
-  border: 1px solid #b8d2c4;
-  border-radius: 12px;
-  background: #edf6ef;
-}
-.segmented-control button {
-  min-height: 38px;
-  padding: 0.45rem 0.75rem;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  font-weight: 750;
-}
-.segmented-control button.active {
-  background: var(--leaf);
-  color: white;
-}
-.forge-simulator-items {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.forge-simulator-item {
-  display: grid;
-  width: 125px;
-  min-height: 145px;
-  padding: 10px;
-  border-radius: 13px;
-  place-items: center;
-  text-align: center;
-}
-.forge-simulator-item .decoration-sprite {
-  width: 92px;
-}
-.forge-simulator-arrow {
-  color: var(--leaf);
-  font-size: 2rem;
-  font-weight: 900;
 }
 .aquarium-catch-selector .filter-panel {
   margin-block: 0.5rem 0.75rem;
