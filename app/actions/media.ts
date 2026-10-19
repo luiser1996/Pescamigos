@@ -50,7 +50,7 @@ export async function updateAvatarAction(data: FormData) {
   const file = data.get("avatar");
   if (!(file instanceof File) || file.size === 0)
     redirect(
-      `/pescadores/${user.id}?edit=1&error=Selecciona+una+imagen`,
+      `/pescadores/${user.username}?edit=1&error=Selecciona+una+imagen`,
       RedirectType.replace,
     );
   const saved = await saveCroppedAvatar(
@@ -64,7 +64,10 @@ export async function updateAvatarAction(data: FormData) {
     where: { id: user.id },
     data: { avatarImageId: image.id },
   });
-  redirect(`/pescadores/${user.id}?edit=1&avatar=1`, RedirectType.replace);
+  redirect(
+    `/pescadores/${user.username}?edit=1&avatar=1`,
+    RedirectType.replace,
+  );
 }
 
 export async function updateSpeciesImagesAction(id: string, data: FormData) {
@@ -106,7 +109,7 @@ export async function updatePlaceImageAction(id: string, data: FormData) {
 export async function updateFavoriteLureAction(data: FormData) {
   const user = await requireUser();
   const file = data.get("favoriteLure");
-  const profile = `/pescadores/${user.id}?edit=1`;
+  const profile = `/pescadores/${user.username}?edit=1`;
   const name = String(data.get("favoriteLureName") ?? "").trim();
   if (!name || name.length > 100)
     redirect(
@@ -148,7 +151,7 @@ export async function updateFavoriteLureAction(data: FormData) {
       RedirectType.replace,
     );
   }
-  revalidatePath(`/pescadores/${user.id}`);
+  revalidatePath(`/pescadores/${user.username}`);
   revalidatePath("/estadisticas");
   redirect(`${profile}&lure=1`, RedirectType.replace);
 }

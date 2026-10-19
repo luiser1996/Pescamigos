@@ -60,6 +60,7 @@ export function VirtualAquarium({
   editableDecorations = false,
   onPlaceDecoration,
   onRemoveDecoration,
+  onSelectDecoration,
   pendingDecorationId,
 }: {
   fish: AquariumFish[];
@@ -68,6 +69,7 @@ export function VirtualAquarium({
   editableDecorations?: boolean;
   onPlaceDecoration?: (id: string, xPct: number, yPct: number) => void;
   onRemoveDecoration?: (id: string) => void;
+  onSelectDecoration?: (id: string) => void;
   pendingDecorationId?: string | null;
 }) {
   const tankRef = useRef<HTMLDivElement>(null);
@@ -255,16 +257,16 @@ export function VirtualAquarium({
           onPlaceDecoration?.(
             pendingDecorationId,
             Math.max(
-              2,
+              1,
               Math.min(
-                92,
+                99,
                 ((event.clientX - bounds.left) / bounds.width) * 100,
               ),
             ),
             Math.max(
-              4,
+              1,
               Math.min(
-                88,
+                97,
                 ((event.clientY - bounds.top) / bounds.height) * 100,
               ),
             ),
@@ -292,16 +294,16 @@ export function VirtualAquarium({
               onPlaceDecoration?.(
                 id,
                 Math.max(
-                  2,
+                  1,
                   Math.min(
-                    92,
+                    99,
                     ((event.clientX - bounds.left) / bounds.width) * 100,
                   ),
                 ),
                 Math.max(
-                  4,
+                  1,
                   Math.min(
-                    88,
+                    97,
                     ((event.clientY - bounds.top) / bounds.height) * 100,
                   ),
                 ),
@@ -321,12 +323,20 @@ export function VirtualAquarium({
             transform: `translate(-50%, -50%) scale(${item.scale})`,
           }}
           draggable={editableDecorations}
+          onClick={(event) => {
+            if (
+              editableDecorations &&
+              !(event.target as HTMLElement).closest("button")
+            )
+              onSelectDecoration?.(item.id);
+          }}
           onDragStart={(event) =>
             event.dataTransfer.setData(
               "application/x-pescamigos-decoration",
               item.id,
             )
           }
+          title={editableDecorations ? "Seleccionar para recolocar" : undefined}
         >
           <DecorationSprite slug={item.slug} />
           {editableDecorations && (

@@ -89,7 +89,7 @@ export default async function Stats() {
           {rankedUsers.map((user) => (
             <Link
               className="card fisher-stat-card"
-              href={`/pescadores/${user.id}`}
+              href={`/pescadores/${user.username}`}
               key={user.id}
             >
               <span
@@ -236,7 +236,7 @@ export default async function Stats() {
         <div className="stats-horizontal-row">
           {lureUsers.map((user) => (
             <article className="card lost-lure-card" key={user.id}>
-              <Link href={`/pescadores/${user.id}`}>
+              <Link href={`/pescadores/${user.username}`}>
                 <b>{user.displayName}</b>
                 <LureImage
                   imageId={user.favoriteLureImageId}

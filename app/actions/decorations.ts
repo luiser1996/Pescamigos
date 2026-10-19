@@ -64,7 +64,7 @@ export async function openChestAction(
   if (!opened) return { available: 0, error: "No tienes cofres disponibles" };
   const remaining = await availableChests(user.id);
   revalidatePath("/cofres");
-  revalidatePath(`/pescadores/${user.id}/pecera`);
+  revalidatePath(`/pescadores/${user.username}/pecera`);
   return { available: remaining, slug: item.slug, nonce: crypto.randomUUID() };
 }
 
@@ -95,7 +95,7 @@ export async function craftDecorationsAction(data: FormData) {
     });
   });
   revalidatePath("/cofres/crafteo");
-  revalidatePath(`/pescadores/${user.id}/pecera`);
+  revalidatePath(`/pescadores/${user.username}/pecera`);
 }
 
 export async function dismantleDecorationAction(data: FormData) {
@@ -123,5 +123,5 @@ export async function dismantleDecorationAction(data: FormData) {
     });
   });
   revalidatePath("/cofres/crafteo");
-  revalidatePath(`/pescadores/${user.id}/pecera`);
+  revalidatePath(`/pescadores/${user.username}/pecera`);
 }

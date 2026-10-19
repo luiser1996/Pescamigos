@@ -25,7 +25,7 @@ export async function saveAquariumAction(data: FormData) {
   });
   if (owned.length !== requestedIds.length)
     redirect(
-      `/pescadores/${user.id}/pecera?error=${encodeURIComponent("Alguna captura seleccionada no es válida")}`,
+      `/pescadores/${user.username}/pecera?error=${encodeURIComponent("Alguna captura seleccionada no es válida")}`,
       RedirectType.replace,
     );
 
@@ -38,8 +38,8 @@ export async function saveAquariumAction(data: FormData) {
         .slice(0, 80)
         .map((item) => ({
           id: String(item.id),
-          xPct: Math.max(2, Math.min(92, Number(item.xPct))),
-          yPct: Math.max(4, Math.min(88, Number(item.yPct))),
+          xPct: Math.max(1, Math.min(99, Number(item.xPct))),
+          yPct: Math.max(1, Math.min(97, Number(item.yPct))),
           scale: Math.max(0.5, Math.min(2, Number(item.scale) || 1)),
         }))
         .filter(
@@ -72,6 +72,6 @@ export async function saveAquariumAction(data: FormData) {
       }),
     ),
   ]);
-  revalidatePath(`/pescadores/${user.id}`);
-  redirect(`/pescadores/${user.id}?aquarium=saved`, RedirectType.replace);
+  revalidatePath(`/pescadores/${user.username}`);
+  redirect(`/pescadores/${user.username}?aquarium=saved`, RedirectType.replace);
 }

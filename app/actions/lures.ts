@@ -12,5 +12,5 @@ export async function changeLostLuresAction(delta: number) {
     data: { lostLures: { increment: delta } },
   });
   revalidatePath("/estadisticas");
-  revalidatePath(`/pescadores/${user.id}`);
+  revalidatePath(`/pescadores/${user.username}`);
 }

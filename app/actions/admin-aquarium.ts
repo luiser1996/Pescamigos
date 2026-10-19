@@ -43,8 +43,8 @@ export async function saveAdminAquariumAction(data: FormData) {
           {
             slug: definition.slug,
             rarity: definition.rarity,
-            xPct: Math.max(2, Math.min(92, Number(item.xPct) || 50)),
-            yPct: Math.max(4, Math.min(88, Number(item.yPct) || 70)),
+            xPct: Math.max(1, Math.min(99, Number(item.xPct) || 50)),
+            yPct: Math.max(1, Math.min(97, Number(item.yPct) || 70)),
             scale: Math.max(0.5, Math.min(2, Number(item.scale) || 1)),
           },
         ];

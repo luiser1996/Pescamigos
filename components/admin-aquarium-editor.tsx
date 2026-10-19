@@ -117,6 +117,7 @@ export function AdminAquariumEditor({
         onRemoveDecoration={(id) =>
           setPlaced((current) => current.filter((item) => item.id !== id))
         }
+        onSelectDecoration={setActiveDecorationId}
       />
       <section className="card admin-aquarium-controls">
         <h2>Añadir peces</h2>

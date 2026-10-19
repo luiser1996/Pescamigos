@@ -97,7 +97,7 @@ export default async function CatchDetail({
         )}
         <p>
           <Link
-            href={`/pescadores/${item.fisher.id}`}
+            href={`/pescadores/${item.fisher.username}`}
             style={{ fontWeight: 800 }}
           >
             {item.fisher.displayName}

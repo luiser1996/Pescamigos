@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/date";
 import { requireUser } from "@/lib/auth";
@@ -48,7 +48,7 @@ export default async function FisherProfile({
   const { id } = await params;
   const status = await searchParams;
   const fisher = await prisma.user.findFirst({
-    where: { id, active: true },
+    where: { OR: [{ id }, { username: id }], active: true },
     include: {
       catches: {
         where: { deletedAt: null },
@@ -70,6 +70,14 @@ export default async function FisherProfile({
     },
   });
   if (!fisher) notFound();
+  if (id !== fisher.username) {
+    const query = new URLSearchParams(
+      Object.entries(status).filter((entry): entry is [string, string] =>
+        Boolean(entry[1]),
+      ),
+    );
+    redirect(`/pescadores/${fisher.username}${query.size ? `?${query}` : ""}`);
+  }
   const [allCatches, activeUsers] = await Promise.all([
     prisma.catch.findMany({
       where: { deletedAt: null },
@@ -297,7 +305,10 @@ export default async function FisherProfile({
           )}
         </div>
         {actor.id === fisher.id && (
-          <Link className="button secondary" href={`/pescadores/${id}?edit=1`}>
+          <Link
+            className="button secondary"
+            href={`/pescadores/${fisher.username}?edit=1`}
+          >
             Editar perfil
           </Link>
         )}
@@ -414,7 +425,7 @@ export default async function FisherProfile({
           {actor.id === fisher.id && (
             <Link
               className="button secondary"
-              href={`/pescadores/${id}/pecera`}
+              href={`/pescadores/${fisher.username}/pecera`}
             >
               Editar pecera
             </Link>

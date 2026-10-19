@@ -49,7 +49,7 @@ export default async function PrivateLayout({
             <Gift aria-hidden="true" />
           </Link>
           <Link
-            href={`/pescadores/${user.id}`}
+            href={`/pescadores/${user.username}`}
             className="profile-header-link"
             style={{ display: "flex", alignItems: "center", gap: 8 }}
           >

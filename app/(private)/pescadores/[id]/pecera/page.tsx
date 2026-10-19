@@ -14,15 +14,20 @@ export default async function AquariumEditPage({
 }) {
   const actor = await requireUser();
   const { id } = await params;
-  if (actor.id !== id) notFound();
+  const owner = await prisma.user.findFirst({
+    where: { OR: [{ id }, { username: id }], active: true },
+    select: { id: true },
+  });
+  if (!owner || actor.id !== owner.id) notFound();
+  const userId = owner.id;
   const [catches, saved, status, allCatches, decorations] = await Promise.all([
     prisma.catch.findMany({
-      where: { fisherId: id, deletedAt: null },
+      where: { fisherId: userId, deletedAt: null },
       include: { species: true, place: true },
       orderBy: { caughtAt: "desc" },
     }),
     prisma.aquariumFish.findMany({
-      where: { userId: id },
+      where: { userId },
       select: { catchId: true },
     }),
     searchParams,
@@ -31,7 +36,7 @@ export default async function AquariumEditPage({
       include: { species: true },
     }),
     prisma.userDecoration.findMany({
-      where: { userId: id },
+      where: { userId },
       orderBy: { acquiredAt: "desc" },
     }),
   ]);

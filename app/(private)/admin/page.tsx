@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  createPlaceAction,
-  createSpeciesAction,
   deletePlaceAction,
   deleteSpeciesAction,
   importSpeciesAction,
@@ -97,6 +95,18 @@ export default async function Admin({
           Abrir pecera de pruebas
         </Link>
       </section>
+      <section className="card admin-aquarium-entry">
+        <div>
+          <h2>Simulador de cofres</h2>
+          <p>
+            Comprueba la ruleta y sus probabilidades sin gastar cofres ni
+            modificar inventarios.
+          </p>
+        </div>
+        <Link className="button secondary" href="/admin/cofres">
+          Abrir simulador
+        </Link>
+      </section>
       <div
         style={{
           display: "grid",
@@ -139,6 +149,10 @@ export default async function Admin({
               <b>
                 {member.displayName} · {member.role}
               </b>
+              {member.nickname && <span>Apodo: {member.nickname}</span>}
+              <span>
+                Usuario de acceso: <strong>{member.username}</strong>
+              </span>
               <label className="field">
                 Nueva contraseña temporal
                 <PasswordInput name="password" minLength={10} required />
@@ -148,105 +162,6 @@ export default async function Admin({
               </button>
             </form>
           ))}
-        </section>
-        <section className="card" style={{ padding: "1.2rem" }}>
-          <h2>Crear lugar</h2>
-          <p>{placeTotal} lugares guardados.</p>
-          <form action={createPlaceAction} style={{ display: "grid", gap: 10 }}>
-            <label className="field">
-              Nombre
-              <input name="name" required />
-            </label>
-            <label className="field">
-              Latitud
-              <input
-                name="latitude"
-                type="number"
-                step="any"
-                min="-90"
-                max="90"
-                required
-              />
-            </label>
-            <label className="field">
-              Longitud
-              <input
-                name="longitude"
-                type="number"
-                step="any"
-                min="-180"
-                max="180"
-                required
-              />
-            </label>
-            <label className="field">
-              Agua
-              <select name="waterType">
-                <option value="FRESHWATER">Dulce</option>
-                <option value="SALTWATER">Salada</option>
-                <option value="BRACKISH">Salobre</option>
-              </select>
-            </label>
-            <label className="field">
-              Rareza
-              <select name="rarity" defaultValue="COMMON">
-                <option value="COMMON">Común</option>
-                <option value="RARE">Raro</option>
-                <option value="VERY_RARE">Muy raro</option>
-                <option value="LEGENDARY">Legendario</option>
-              </select>
-            </label>
-            <button className="button">Guardar lugar</button>
-          </form>
-        </section>
-        <section className="card" style={{ padding: "1.2rem" }}>
-          <h2>Crear especie</h2>
-          <form
-            action={createSpeciesAction}
-            style={{ display: "grid", gap: 10 }}
-          >
-            <label className="field">
-              Identificador URL
-              <input
-                name="slug"
-                placeholder="trucha-comun"
-                pattern="[a-z0-9-]+"
-                required
-              />
-            </label>
-            <label className="field">
-              Nombre común
-              <input name="commonName" required />
-            </label>
-            <label className="field">
-              Nombre científico
-              <input name="scientificName" required />
-            </label>
-            <label className="field">
-              Agua
-              <select name="waterType">
-                <option value="FRESHWATER">Dulce</option>
-                <option value="SALTWATER">Salada</option>
-              </select>
-            </label>
-            <label className="field">
-              Descripción
-              <textarea name="description" rows={3} />
-            </label>
-            <label className="field">
-              Información legal
-              <textarea name="legalStatus" rows={3} />
-            </label>
-            <label className="field">
-              Revisión
-              <select name="verificationStatus">
-                <option value="PENDING">Pendiente</option>
-                <option value="NEEDS_REVIEW">Necesita revisión</option>
-                <option value="VERIFIED">Verificada</option>
-              </select>
-            </label>
-            <button className="button">Crear especie</button>
-          </form>
         </section>
         <section
           className="card"

@@ -87,12 +87,12 @@ export async function changePasswordAction(formData: FormData) {
   const next = String(formData.get("newPassword") ?? "");
   if (!(await argon2.verify(user.passwordHash, current)))
     redirect(
-      `/pescadores/${user.id}?edit=1&error=La+contraseña+actual+no+es+correcta`,
+      `/pescadores/${user.username}?edit=1&error=La+contraseña+actual+no+es+correcta`,
       RedirectType.replace,
     );
   if (next.length < 10 || next.length > 128)
     redirect(
-      `/pescadores/${user.id}?edit=1&error=La+nueva+contraseña+debe+tener+entre+10+y+128+caracteres`,
+      `/pescadores/${user.username}?edit=1&error=La+nueva+contraseña+debe+tener+entre+10+y+128+caracteres`,
       RedirectType.replace,
     );
   const passwordHash = await hashPassword(next);
@@ -101,7 +101,10 @@ export async function changePasswordAction(formData: FormData) {
     prisma.session.deleteMany({ where: { userId: user.id } }),
   ]);
   await createSession(user.id);
-  redirect(`/pescadores/${user.id}?edit=1&changed=1`, RedirectType.replace);
+  redirect(
+    `/pescadores/${user.username}?edit=1&changed=1`,
+    RedirectType.replace,
+  );
 }
 
 export async function updateDisplayNameAction(formData: FormData) {
@@ -109,11 +112,14 @@ export async function updateDisplayNameAction(formData: FormData) {
   const displayName = String(formData.get("displayName") ?? "").trim();
   if (displayName.length < 2 || displayName.length > 60)
     redirect(
-      `/pescadores/${user.id}?edit=1&error=El+nombre+debe+tener+entre+2+y+60+caracteres`,
+      `/pescadores/${user.username}?edit=1&error=El+nombre+debe+tener+entre+2+y+60+caracteres`,
       RedirectType.replace,
     );
   await prisma.user.update({ where: { id: user.id }, data: { displayName } });
-  redirect(`/pescadores/${user.id}?edit=1&changed=1`, RedirectType.replace);
+  redirect(
+    `/pescadores/${user.username}?edit=1&changed=1`,
+    RedirectType.replace,
+  );
 }
 
 export async function updateNicknameAction(formData: FormData) {
@@ -121,12 +127,15 @@ export async function updateNicknameAction(formData: FormData) {
   const nickname = String(formData.get("nickname") ?? "").trim();
   if (nickname.length > 60)
     redirect(
-      `/pescadores/${user.id}?edit=1&error=El+apodo+no+puede+superar+60+caracteres`,
+      `/pescadores/${user.username}?edit=1&error=El+apodo+no+puede+superar+60+caracteres`,
       RedirectType.replace,
     );
   await prisma.user.update({
     where: { id: user.id },
     data: { nickname: nickname || null },
   });
-  redirect(`/pescadores/${user.id}?edit=1&changed=1`, RedirectType.replace);
+  redirect(
+    `/pescadores/${user.username}?edit=1&changed=1`,
+    RedirectType.replace,
+  );
 }

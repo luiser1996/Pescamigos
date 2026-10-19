@@ -132,6 +132,7 @@ export function AquariumEditor({
           onRemoveDecoration={(id) =>
             setPlaced((current) => current.filter((item) => item.id !== id))
           }
+          onSelectDecoration={setActiveDecorationId}
         />
       </section>
       <section className="card aquarium-decoration-selector">

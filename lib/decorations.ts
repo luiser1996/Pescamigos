@@ -57,7 +57,7 @@ export const chestsForPoints = (points: number) =>
   1 + Math.floor(Math.max(0, points) / 300);
 
 export const decorations: DecorationDefinition[] = [
-  ...make("COMMON", "/decorations/common-atlas.png", 5, 4, [
+  ...make("COMMON", "/decorations/common-atlas.png?v=2", 5, 4, [
     ["Roca lisa", "Piedra gris redondeada"],
     ["Planta acuática", "Planta verde que se balancea suavemente"],
     ["Concha marina", "Concha decorativa sobre la arena"],
@@ -79,7 +79,7 @@ export const decorations: DecorationDefinition[] = [
     ["Hojas sumergidas", "Hojas caídas sobre el fondo"],
     ["Grava de río", "Piedras pequeñas y redondeadas"],
   ]),
-  ...make("RARE", "/decorations/rare-atlas.png", 4, 3, [
+  ...make("RARE", "/decorations/rare-atlas.png?v=2", 4, 3, [
     ["Coral rojo", "Coral ramificado de color intenso"],
     ["Cofre hundido", "Antiguo cofre cerrado y cubierto de algas"],
     ["Ánfora antigua", "Vasija de barro que sirve de refugio"],
@@ -101,7 +101,7 @@ export const decorations: DecorationDefinition[] = [
     ["Tesoro del pirata", "Cofre abierto repleto de monedas"],
     ["Esqueleto marino", "Restos de una enorme criatura marina"],
   ]),
-  ...make("LEGENDARY", "/decorations/legendary-atlas.png", 2, 1, [
+  ...make("LEGENDARY", "/decorations/legendary-atlas.png?v=2", 2, 1, [
     [
       "Palacio de la Atlántida",
       "Palacio submarino con columnas doradas y cristales luminosos",

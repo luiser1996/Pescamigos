@@ -540,10 +540,10 @@ h2 {
   width: clamp(65px, 10vw, 125px);
 }
 .aquarium-decoration.rarity-decoration-very-rare {
-  width: clamp(90px, 14vw, 175px);
+  width: clamp(115px, 18vw, 225px);
 }
 .aquarium-decoration.rarity-decoration-legendary {
-  width: clamp(120px, 19vw, 235px);
+  width: clamp(155px, 25vw, 310px);
 }
 .aquarium-decoration.editable {
   cursor: grab;
