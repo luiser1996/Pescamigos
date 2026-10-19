@@ -3,11 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { DecorationSprite } from "@/components/decoration-sprite";
 
-export type AquariumBehavior =
-  | "FREE_SWIMMER"
-  | "BOTTOM_DWELLER"
-  | "CEPHALOPOD";
+export type AquariumBehavior = "FREE_SWIMMER" | "BOTTOM_DWELLER" | "CEPHALOPOD";
 
 export type AquariumFish = {
   id: string;
@@ -18,6 +16,15 @@ export type AquariumFish = {
   caughtAt?: string;
   placeName?: string;
   isRecord?: boolean;
+};
+export type PlacedDecoration = {
+  id: string;
+  slug: string;
+  rarity: string;
+  xPct: number;
+  yPct: number;
+  scale: number;
+  acquiredAtValue?: number;
 };
 
 type Motion = {
@@ -32,7 +39,7 @@ type Motion = {
 
 const SAND_HEIGHT = 42;
 const fishWidth = (lengthCm: number) =>
-  Math.min(260, Math.max(38, lengthCm * 2.55));
+  Math.min(245, Math.max(36, lengthCm * 2.35));
 
 function seed(value: string) {
   let result = 2166136261;
@@ -46,22 +53,56 @@ function seed(value: string) {
 export function VirtualAquarium({
   fish,
   compact = false,
+  decorations = [],
+  editableDecorations = false,
+  onPlaceDecoration,
+  onRemoveDecoration,
+  pendingDecorationId,
 }: {
   fish: AquariumFish[];
   compact?: boolean;
+  decorations?: PlacedDecoration[];
+  editableDecorations?: boolean;
+  onPlaceDecoration?: (id: string, xPct: number, yPct: number) => void;
+  onRemoveDecoration?: (id: string) => void;
+  pendingDecorationId?: string | null;
 }) {
   const tankRef = useRef<HTMLDivElement>(null);
   const fishRefs = useRef(new Map<string, HTMLButtonElement>());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [spriteScales, setSpriteScales] = useState<Record<string, number>>({});
+  const [sparkling, setSparkling] = useState<Set<string>>(() => new Set());
   const activeFish = fish.find((item) => item.id === activeId);
 
-  const normalizeSprite = (
-    id: string,
-    image: HTMLImageElement,
-  ) => {
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    fish
+      .filter((item) => item.isRecord)
+      .forEach((item) => {
+        const sparkle = () => {
+          setSparkling((current) => new Set(current).add(item.id));
+          timers.push(
+            setTimeout(() => {
+              setSparkling((current) => {
+                const next = new Set(current);
+                next.delete(item.id);
+                return next;
+              });
+            }, 1900),
+          );
+          timers.push(setTimeout(sparkle, 2600 + Math.random() * 2200));
+        };
+        timers.push(setTimeout(sparkle, 300 + Math.random() * 1800));
+      });
+    return () => timers.forEach(clearTimeout);
+  }, [fish]);
+
+  const normalizeSprite = (id: string, image: HTMLImageElement) => {
     if (!image.naturalWidth || spriteScales[id]) return;
-    const reduction = Math.min(1, 600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const reduction = Math.min(
+      1,
+      600 / Math.max(image.naturalWidth, image.naturalHeight),
+    );
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.naturalWidth * reduction));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * reduction));
@@ -69,7 +110,12 @@ export function VirtualAquarium({
     if (!context) return;
     try {
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const pixels = context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      ).data;
       let left = canvas.width;
       let right = -1;
       for (let y = 0; y < canvas.height; y += 1) {
@@ -193,8 +239,104 @@ export function VirtualAquarium({
       ref={tankRef}
       className={`virtual-aquarium${compact ? " virtual-aquarium-compact" : ""}`}
       aria-label="Pecera virtual"
+      onClick={(event) => {
+        if (
+          editableDecorations &&
+          pendingDecorationId &&
+          !(event.target as HTMLElement).closest(
+            ".aquarium-fish, .aquarium-fish-details, .aquarium-decoration",
+          ) &&
+          tankRef.current
+        ) {
+          const bounds = tankRef.current.getBoundingClientRect();
+          onPlaceDecoration?.(
+            pendingDecorationId,
+            Math.max(
+              2,
+              Math.min(
+                92,
+                ((event.clientX - bounds.left) / bounds.width) * 100,
+              ),
+            ),
+            Math.max(
+              4,
+              Math.min(
+                88,
+                ((event.clientY - bounds.top) / bounds.height) * 100,
+              ),
+            ),
+          );
+        }
+        if (
+          !(event.target as HTMLElement).closest(
+            ".aquarium-fish, .aquarium-fish-details",
+          )
+        )
+          setActiveId(null);
+      }}
+      onDragOver={
+        editableDecorations ? (event) => event.preventDefault() : undefined
+      }
+      onDrop={
+        editableDecorations
+          ? (event) => {
+              event.preventDefault();
+              const id = event.dataTransfer.getData(
+                "application/x-pescamigos-decoration",
+              );
+              if (!id || !tankRef.current) return;
+              const bounds = tankRef.current.getBoundingClientRect();
+              onPlaceDecoration?.(
+                id,
+                Math.max(
+                  2,
+                  Math.min(
+                    92,
+                    ((event.clientX - bounds.left) / bounds.width) * 100,
+                  ),
+                ),
+                Math.max(
+                  4,
+                  Math.min(
+                    88,
+                    ((event.clientY - bounds.top) / bounds.height) * 100,
+                  ),
+                ),
+              );
+            }
+          : undefined
+      }
     >
       <div className="aquarium-water-light" aria-hidden="true" />
+      {decorations.map((item) => (
+        <span
+          className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")}${editableDecorations ? " editable" : ""}`}
+          key={item.id}
+          style={{
+            left: `${item.xPct}%`,
+            top: `${item.yPct}%`,
+            transform: `translate(-50%, -50%) scale(${item.scale})`,
+          }}
+          draggable={editableDecorations}
+          onDragStart={(event) =>
+            event.dataTransfer.setData(
+              "application/x-pescamigos-decoration",
+              item.id,
+            )
+          }
+        >
+          <DecorationSprite slug={item.slug} />
+          {editableDecorations && (
+            <button
+              type="button"
+              aria-label="Quitar decoración"
+              onClick={() => onRemoveDecoration?.(item.id)}
+            >
+              ×
+            </button>
+          )}
+        </span>
+      ))}
       {fish.length === 0 && (
         <p className="aquarium-empty">La pecera está vacía.</p>
       )}
@@ -222,7 +364,9 @@ export function VirtualAquarium({
                 sizes="260px"
                 src={`/api/assets/${item.catalogImageId}`}
                 alt={`${item.name}, ${item.lengthCm} cm`}
-                onLoad={(event) => normalizeSprite(item.id, event.currentTarget)}
+                onLoad={(event) =>
+                  normalizeSprite(item.id, event.currentTarget)
+                }
               />
             </span>
           ) : (
@@ -231,7 +375,10 @@ export function VirtualAquarium({
             </span>
           )}
           {item.isRecord && (
-            <span className="aquarium-record-sparkles" aria-hidden="true">
+            <span
+              className={`aquarium-record-sparkles${sparkling.has(item.id) ? " active" : ""}`}
+              aria-hidden="true"
+            >
               ✦
             </span>
           )}

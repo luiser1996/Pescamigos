@@ -15,7 +15,7 @@ export default async function AquariumEditPage({
   const actor = await requireUser();
   const { id } = await params;
   if (actor.id !== id) notFound();
-  const [catches, saved, status, allCatches] = await Promise.all([
+  const [catches, saved, status, allCatches, decorations] = await Promise.all([
     prisma.catch.findMany({
       where: { fisherId: id, deletedAt: null },
       include: { species: true, place: true },
@@ -30,14 +30,23 @@ export default async function AquariumEditPage({
       where: { deletedAt: null },
       include: { species: true },
     }),
+    prisma.userDecoration.findMany({
+      where: { userId: id },
+      orderBy: { acquiredAt: "desc" },
+    }),
   ]);
   const records = recordIds(allCatches);
   return (
     <>
-      {status.error && <p role="alert" className="form-error">{status.error}</p>}
+      {status.error && (
+        <p role="alert" className="form-error">
+          {status.error}
+        </p>
+      )}
       <AquariumEditor
         catches={catches.map((item) => ({
           id: item.id,
+          speciesId: item.speciesId,
           name: item.species.commonName,
           lengthCm: Number(item.lengthCm),
           catalogImageId: item.species.catalogImageId,
@@ -48,6 +57,15 @@ export default async function AquariumEditPage({
           isRecord: records.has(item.id),
         }))}
         initialIds={saved.map((item) => item.catchId)}
+        decorations={decorations.map((item) => ({
+          id: item.id,
+          slug: item.slug,
+          rarity: item.rarity,
+          xPct: item.xPct ?? 50,
+          yPct: item.yPct ?? 70,
+          scale: item.scale,
+          acquiredAtValue: item.acquiredAt.getTime(),
+        }))}
       />
     </>
   );

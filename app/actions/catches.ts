@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { removeSavedPhoto, saveCroppedCapture, savePhoto } from "@/lib/storage";
 import { dateFromLocalForm } from "@/lib/date";
 import { imageErrorMessage } from "@/lib/upload-errors";
+import { ensureChestAwards } from "@/lib/chests";
 import {
   canEditCatch,
   catchEditSchema,
@@ -171,6 +172,7 @@ export async function createCatchAction(formData: FormData) {
     );
     throw error;
   }
+  await ensureChestAwards(user.id);
   redirect(`/capturas/${itemId}?saved=1`);
 }
 

@@ -5,6 +5,7 @@ import { logoutAction } from "@/app/actions/auth";
 import { BackButton } from "@/components/back-button";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { BottomNav } from "@/components/bottom-nav";
+import { Gift } from "lucide-react";
 
 export default async function PrivateLayout({
   children,
@@ -38,6 +39,14 @@ export default async function PrivateLayout({
               height={393}
               priority
             />
+          </Link>
+          <Link
+            href="/cofres"
+            className="chest-header-link"
+            aria-label="Abrir cofres"
+            title="Cofres"
+          >
+            <Gift aria-hidden="true" />
           </Link>
           <Link
             href={`/pescadores/${user.id}`}

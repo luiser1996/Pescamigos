@@ -36,6 +36,12 @@ enum AquariumBehavior {
   CEPHALOPOD
 }
 
+enum DecorationSource {
+  CHEST
+  CRAFT
+  DISMANTLE
+}
+
 enum FishingMode {
   SHORE
   BOAT
@@ -73,6 +79,7 @@ model User {
   nickname            String?
   favoriteLureImage   StoredImage?   @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
   aquariumFish        AquariumFish[]
+  decorations         UserDecoration[]
 }
 
 model Session {
@@ -222,10 +229,27 @@ model Catch {
   baitOrLure     BaitOrLure?      @relation(fields: [baitOrLureId], references: [id], onDelete: SetNull)
   photos         CatchPhoto[]
   aquariumFish   AquariumFish[]
+  chestsAwarded  Int?
 
   @@index([fisherId, caughtAt])
   @@index([speciesId, fisherId, deletedAt])
   @@index([placeId, caughtAt])
+}
+
+model UserDecoration {
+  id         String           @id @default(cuid())
+  userId     String
+  slug       String
+  rarity     Rarity
+  source     DecorationSource
+  acquiredAt DateTime         @default(now())
+  xPct       Float?
+  yPct       Float?
+  scale      Float            @default(1)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, acquiredAt])
+  @@index([userId, rarity])
 }
 
 model AquariumFish {

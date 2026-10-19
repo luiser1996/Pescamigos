@@ -63,6 +63,10 @@ export default async function FisherProfile({
         include: { catch: { include: { species: true, place: true } } },
         orderBy: { createdAt: "asc" },
       },
+      decorations: {
+        where: { xPct: { not: null }, yPct: { not: null } },
+        orderBy: { acquiredAt: "asc" },
+      },
     },
   });
   if (!fisher) notFound();
@@ -316,9 +320,17 @@ export default async function FisherProfile({
                   valor.
                 </p>
                 <ul>
-                  <li>Primera captura de una especie: +{pointBonuses.firstSpeciesCatch} RP</li>
-                  <li>Récord de una especie: +{pointBonuses.speciesRecord} RP</li>
-                  <li>Récord absoluto de la aplicación: +{pointBonuses.absoluteRecord} RP</li>
+                  <li>
+                    Primera captura de una especie: +
+                    {pointBonuses.firstSpeciesCatch} RP
+                  </li>
+                  <li>
+                    Récord de una especie: +{pointBonuses.speciesRecord} RP
+                  </li>
+                  <li>
+                    Récord absoluto de la aplicación: +
+                    {pointBonuses.absoluteRecord} RP
+                  </li>
                 </ul>
                 <strong>{nextRankMessage(rank.points)}</strong>
               </div>
@@ -400,15 +412,28 @@ export default async function FisherProfile({
             </h2>
           </div>
           {actor.id === fisher.id && (
-            <Link className="button secondary" href={`/pescadores/${id}/pecera`}>
+            <Link
+              className="button secondary"
+              href={`/pescadores/${id}/pecera`}
+            >
               Editar pecera
             </Link>
           )}
         </div>
         {status.aquarium === "saved" && (
-          <p role="status" className="aquarium-saved">✓ Pecera guardada.</p>
+          <p role="status" className="aquarium-saved">
+            ✓ Pecera guardada.
+          </p>
         )}
         <VirtualAquarium
+          decorations={fisher.decorations.map((item) => ({
+            id: item.id,
+            slug: item.slug,
+            rarity: item.rarity,
+            xPct: item.xPct!,
+            yPct: item.yPct!,
+            scale: item.scale,
+          }))}
           fish={fisher.aquariumFish
             .filter((entry) => !entry.catch.deletedAt)
             .map((entry) => ({
