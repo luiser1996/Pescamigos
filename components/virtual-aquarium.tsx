@@ -66,7 +66,6 @@ function seed(value: string) {
 
 export function VirtualAquarium({
   fish,
-  compact = false,
   decorations = [],
   editableDecorations = false,
   onPlaceDecoration,
@@ -78,7 +77,6 @@ export function VirtualAquarium({
   pendingDecorationId,
 }: {
   fish: AquariumFish[];
-  compact?: boolean;
   decorations?: PlacedDecoration[];
   editableDecorations?: boolean;
   onPlaceDecoration?: (id: string, xPct: number, yPct: number) => void;
@@ -301,7 +299,7 @@ export function VirtualAquarium({
   return (
     <div
       ref={tankRef}
-      className={`virtual-aquarium${compact ? " virtual-aquarium-compact" : ""}`}
+      className="virtual-aquarium"
       aria-label="Pecera virtual"
       onClick={(event) => {
         if (

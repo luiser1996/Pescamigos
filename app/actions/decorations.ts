@@ -86,13 +86,13 @@ export async function craftDecorationsAction(
 ): Promise<CraftState> {
   const user = await requireUser();
   const ids = [...new Set(data.getAll("decorationIds").map(String))];
-  if (ids.length !== 5) return { error: "Selecciona exactamente 5 objetos" };
+  if (ids.length !== 3) return { error: "Selecciona exactamente 3 objetos" };
   const reward = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
     const owned = await tx.userDecoration.findMany({
       where: { id: { in: ids }, userId: user.id },
     });
-    if (owned.length !== 5 || new Set(owned.map((x) => x.rarity)).size !== 1)
+    if (owned.length !== 3 || new Set(owned.map((x) => x.rarity)).size !== 1)
       return null;
     const index = rarityOrder.indexOf(owned[0].rarity);
     if (index < 0 || index >= rarityOrder.length - 1) return null;

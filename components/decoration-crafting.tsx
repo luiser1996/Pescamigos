@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   type CraftState,
   craftDecorationsAction,
@@ -59,6 +59,7 @@ export function DecorationCrafting({
     null,
   );
   const [lastAction, setLastAction] = useState<Result["kind"] | null>(null);
+  const resultRef = useRef<HTMLElement>(null);
   const [craftState, craftAction, craftPending] = useActionState(
     craftDecorationsAction,
     emptyState,
@@ -82,6 +83,15 @@ export function DecorationCrafting({
           kind: serverResult.kind,
         }
       : null;
+  const resultNonce = visibleResult?.nonce;
+
+  useEffect(() => {
+    if (busy || resultNonce)
+      resultRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+  }, [busy, resultNonce]);
 
   const changeAmount = (group: Group, delta: number) => {
     setResult(null);
@@ -105,7 +115,7 @@ export function DecorationCrafting({
   const simulate = (rarity: Rarity, kind: "craft" | "dismantle") => {
     const rarityIndex = rarityOrder.indexOf(rarity);
     const ids = chosenIds(rarity);
-    if (kind === "craft" ? ids.length !== 5 : ids.length !== 1) return;
+    if (kind === "craft" ? ids.length !== 3 : ids.length !== 1) return;
     setSimulationKind(kind);
     setResult(null);
     window.setTimeout(() => {
@@ -138,7 +148,7 @@ export function DecorationCrafting({
         <div>
           <h1>{simulated ? "Simulador de forja" : "Forja de decoraciones"}</h1>
           <p>
-            Combina 5 objetos de la misma rareza para obtener uno del nivel
+            Combina 3 objetos de la misma rareza para obtener uno del nivel
             siguiente, o desmantela uno para recibir 3 del nivel anterior.
           </p>
         </div>
@@ -151,7 +161,11 @@ export function DecorationCrafting({
       </header>
 
       {(busy || visibleResult || craftState.error || dismantleState.error) && (
-        <section className="card craft-result" aria-live="polite">
+        <section
+          ref={resultRef}
+          className="card craft-result"
+          aria-live="polite"
+        >
           {busy ? (
             <div className="crafting-animation">
               <span aria-hidden="true">✦</span>
@@ -195,7 +209,7 @@ export function DecorationCrafting({
         const rarityGroups = groups.filter((group) => group.rarity === rarity);
         if (!rarityGroups.length) return null;
         const ids = chosenIds(rarity);
-        const canCraft = rarity !== "LEGENDARY" && ids.length === 5;
+        const canCraft = rarity !== "LEGENDARY" && ids.length === 3;
         const canDismantle = rarity !== "COMMON" && ids.length === 1;
         return (
           <section className="card craft-tier" key={rarity}>
@@ -255,7 +269,7 @@ export function DecorationCrafting({
                     disabled={!canCraft || busy}
                     onClick={() => simulate(rarity, "craft")}
                   >
-                    Forjar 5 objetos ({ids.length}/5)
+                    Forjar objeto superior ({ids.length}/3)
                   </button>
                 ) : (
                   <form action={craftAction}>
@@ -272,7 +286,7 @@ export function DecorationCrafting({
                       disabled={!canCraft || busy}
                       onClick={() => setLastAction("craft")}
                     >
-                      Forjar 5 objetos ({ids.length}/5)
+                      Forjar objeto superior ({ids.length}/3)
                     </button>
                   </form>
                 ))}
@@ -284,7 +298,7 @@ export function DecorationCrafting({
                     disabled={!canDismantle || busy}
                     onClick={() => simulate(rarity, "dismantle")}
                   >
-                    Desmantelar 1 objeto
+                    Desmantelar objeto
                   </button>
                 ) : (
                   <form action={dismantleAction}>
@@ -298,7 +312,7 @@ export function DecorationCrafting({
                       disabled={!canDismantle || busy}
                       onClick={() => setLastAction("dismantle")}
                     >
-                      Desmantelar 1 objeto
+                      Desmantelar objeto
                     </button>
                   </form>
                 ))}

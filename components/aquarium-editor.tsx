@@ -46,7 +46,6 @@ export function AquariumEditor({
     decorations.filter((item) => item.isPlaced),
   );
   const [decorationQuery, setDecorationQuery] = useState("");
-  const [onlyPlacedDecorations, setOnlyPlacedDecorations] = useState(false);
   const [decorationSort, setDecorationSort] = useState<
     "new" | "old" | "rare" | "common"
   >("new");
@@ -86,6 +85,9 @@ export function AquariumEditor({
     { length: Math.min(5, totalPages) },
     (_, index) => firstPage + index,
   );
+  const availableDecorations = decorations.filter(
+    (item) => !placed.some((placedItem) => placedItem.id === item.id),
+  );
 
   return (
     <form action={saveAquariumAction} className="aquarium-editor">
@@ -120,7 +122,6 @@ export function AquariumEditor({
         <VirtualAquarium
           fish={preview}
           decorations={placed}
-          compact
           editableDecorations
           onRemoveFish={(id) =>
             setSelected((current) => {
@@ -185,16 +186,6 @@ export function AquariumEditor({
                 onChange={(event) => setDecorationQuery(event.target.value)}
               />
             </label>
-            <label className="aquarium-selected-filter">
-              <input
-                type="checkbox"
-                checked={onlyPlacedDecorations}
-                onChange={(event) =>
-                  setOnlyPlacedDecorations(event.target.checked)
-                }
-              />
-              Mostrar solo las añadidas
-            </label>
             <label className="field">
               Orden
               <select
@@ -213,14 +204,11 @@ export function AquariumEditor({
         </FilterPanel>
         {decorations.length === 0 ? (
           <p>Aún no tienes decoraciones. Abre cofres para conseguirlas.</p>
+        ) : availableDecorations.length === 0 ? (
+          <p>Todas tus decoraciones están colocadas en la pecera.</p>
         ) : (
           <div className="decoration-inventory-grid">
-            {[...decorations]
-              .filter(
-                (item) =>
-                  !onlyPlacedDecorations ||
-                  placed.some((placedItem) => placedItem.id === item.id),
-              )
+            {[...availableDecorations]
               .filter((item) =>
                 (decorationBySlug.get(item.slug)?.name ?? item.slug)
                   .toLocaleLowerCase("es")

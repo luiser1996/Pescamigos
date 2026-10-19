@@ -285,7 +285,9 @@ export default async function FisherProfile({
           </div>
         )}
         <div style={{ marginRight: "auto" }}>
-          <p style={{ margin: 0 }}>Perfil y cuaderno personal</p>
+          <p style={{ margin: 0, fontWeight: 800 }}>
+            Perfil y cuaderno personal
+          </p>
           <h1 style={{ fontSize: "clamp(2.2rem,5vw,3.4rem)", marginTop: 6 }}>
             {fisher.displayName}
           </h1>

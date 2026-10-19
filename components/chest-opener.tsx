@@ -69,7 +69,7 @@ export function ChestOpener({
           </p>
         </div>
         <Link className="button secondary" href="/cofres/crafteo">
-          Craftear decoraciones
+          Forja de decoraciones
         </Link>
       </section>
       <section className="rarity-odds" aria-label="Probabilidades">
