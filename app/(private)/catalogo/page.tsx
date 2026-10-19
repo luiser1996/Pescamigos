@@ -233,6 +233,10 @@ export default async function Catalog({
                           width: "100%",
                           height: "118px",
                           objectFit: "contain",
+                          transform:
+                            s.commonName.toLocaleLowerCase("es") === "platija"
+                              ? "scaleX(-1)"
+                              : undefined,
                         }}
                       />
                     ) : (

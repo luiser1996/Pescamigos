@@ -16,6 +16,8 @@ export type AquariumFish = {
   caughtAt?: string;
   placeName?: string;
   isRecord?: boolean;
+  flipCatalogImage?: boolean;
+  detailHref?: string | null;
 };
 export type PlacedDecoration = {
   id: string;
@@ -25,6 +27,7 @@ export type PlacedDecoration = {
   yPct: number;
   scale: number;
   acquiredAtValue?: number;
+  isPlaced?: boolean;
 };
 
 type Motion = {
@@ -37,7 +40,7 @@ type Motion = {
   behavior: AquariumBehavior;
 };
 
-const SAND_HEIGHT = 42;
+const SAND_HEIGHT = 53;
 const fishWidth = (lengthCm: number) =>
   Math.min(245, Math.max(36, lengthCm * 2.35));
 
@@ -356,7 +359,9 @@ export function VirtualAquarium({
           {item.catalogImageId ? (
             <span
               className="aquarium-fish-art"
-              style={{ transform: `scale(${spriteScales[item.id] ?? 1})` }}
+              style={{
+                transform: `scale(${spriteScales[item.id] ?? 1}) scaleX(${item.flipCatalogImage || item.name.toLocaleLowerCase("es") === "platija" ? -1 : 1})`,
+              }}
             >
               <Image
                 unoptimized
@@ -399,7 +404,13 @@ export function VirtualAquarium({
             <span>{activeFish.lengthCm} cm</span>
             {activeFish.caughtAt && <span>{activeFish.caughtAt}</span>}
             {activeFish.placeName && <span>{activeFish.placeName}</span>}
-            <Link href={`/capturas/${activeFish.id}`}>Ver recuerdo</Link>
+            {activeFish.detailHref !== null && (
+              <Link
+                href={activeFish.detailHref ?? `/capturas/${activeFish.id}`}
+              >
+                Ver recuerdo
+              </Link>
+            )}
           </div>
           {activeFish.catalogImageId && (
             <span className="aquarium-details-image">
@@ -409,6 +420,13 @@ export function VirtualAquarium({
                 sizes="100px"
                 src={`/api/assets/${activeFish.catalogImageId}`}
                 alt={activeFish.name}
+                style={{
+                  transform:
+                    activeFish.flipCatalogImage ||
+                    activeFish.name.toLocaleLowerCase("es") === "platija"
+                      ? "scaleX(-1)"
+                      : undefined,
+                }}
               />
             </span>
           )}

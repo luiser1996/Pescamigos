@@ -65,6 +65,7 @@ export default async function AquariumEditPage({
           yPct: item.yPct ?? 70,
           scale: item.scale,
           acquiredAtValue: item.acquiredAt.getTime(),
+          isPlaced: item.xPct != null && item.yPct != null,
         }))}
       />
     </>

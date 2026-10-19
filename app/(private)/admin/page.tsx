@@ -85,6 +85,18 @@ export default async function Admin({
           ✓ {status.imported} especies importadas o actualizadas.
         </p>
       )}
+      <section className="card admin-aquarium-entry">
+        <div>
+          <h2>Pecera de pruebas</h2>
+          <p>
+            Pecera común para que los administradores prueben cualquier pez y
+            decoración sin tener que obtenerlos.
+          </p>
+        </div>
+        <Link className="button" href="/admin/pecera">
+          Abrir pecera de pruebas
+        </Link>
+      </section>
       <div
         style={{
           display: "grid",

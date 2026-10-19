@@ -42,9 +42,10 @@ export function AquariumEditor({
   const [ascending, setAscending] = useState(false);
   const [page, setPage] = useState(1);
   const [placed, setPlaced] = useState(
-    decorations.filter((item) => item.xPct != null && item.yPct != null),
+    decorations.filter((item) => item.isPlaced),
   );
   const [decorationQuery, setDecorationQuery] = useState("");
+  const [onlyPlacedDecorations, setOnlyPlacedDecorations] = useState(false);
   const [decorationSort, setDecorationSort] = useState<
     "new" | "old" | "rare" | "common"
   >("new");
@@ -149,6 +150,16 @@ export function AquariumEditor({
                 onChange={(event) => setDecorationQuery(event.target.value)}
               />
             </label>
+            <label className="aquarium-selected-filter">
+              <input
+                type="checkbox"
+                checked={onlyPlacedDecorations}
+                onChange={(event) =>
+                  setOnlyPlacedDecorations(event.target.checked)
+                }
+              />
+              Mostrar solo las añadidas
+            </label>
             <label className="field">
               Orden
               <select
@@ -170,6 +181,11 @@ export function AquariumEditor({
         ) : (
           <div className="decoration-inventory-grid">
             {[...decorations]
+              .filter(
+                (item) =>
+                  !onlyPlacedDecorations ||
+                  placed.some((placedItem) => placedItem.id === item.id),
+              )
               .filter((item) =>
                 (decorationBySlug.get(item.slug)?.name ?? item.slug)
                   .toLocaleLowerCase("es")

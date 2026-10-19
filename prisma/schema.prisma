@@ -146,6 +146,7 @@ model Species {
   detailImageId         String?            @unique
   catalogImage          StoredImage?       @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
   detailImage           StoredImage?       @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
+  adminAquariumFish     AdminAquariumFish[]
 
   @@index([waterType, archivedAt])
   @@index([commonName])
@@ -250,6 +251,28 @@ model UserDecoration {
 
   @@index([userId, acquiredAt])
   @@index([userId, rarity])
+}
+
+model AdminAquariumFish {
+  id        String   @id @default(cuid())
+  speciesId String
+  lengthCm  Float
+  createdAt DateTime @default(now())
+  species   Species  @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model AdminAquariumDecoration {
+  id        String   @id @default(cuid())
+  slug      String
+  rarity    Rarity
+  xPct      Float
+  yPct      Float
+  scale     Float    @default(1)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model AquariumFish {
