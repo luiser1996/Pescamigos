@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/date";
 import { requireUser } from "@/lib/auth";
 import {
   changePasswordAction,
@@ -59,7 +60,7 @@ export default async function FisherProfile({
         orderBy: { caughtAt: "desc" },
       },
       aquariumFish: {
-        include: { catch: { include: { species: true } } },
+        include: { catch: { include: { species: true, place: true } } },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -392,8 +393,11 @@ export default async function FisherProfile({
       <section className="profile-aquarium-section">
         <div className="profile-aquarium-heading">
           <div>
-            <h2>Mi pecera virtual</h2>
-            <p>Los peces conservan la escala de tus capturas.</p>
+            <h2>
+              {actor.id === fisher.id
+                ? "Mi pecera"
+                : `Pecera de ${fisher.displayName}`}
+            </h2>
           </div>
           {actor.id === fisher.id && (
             <Link className="button secondary" href={`/pescadores/${id}/pecera`}>
@@ -412,6 +416,9 @@ export default async function FisherProfile({
               name: entry.catch.species.commonName,
               lengthCm: Number(entry.catch.lengthCm),
               catalogImageId: entry.catch.species.catalogImageId,
+              behavior: entry.catch.species.aquariumBehavior,
+              caughtAt: formatDate(entry.catch.caughtAt),
+              placeName: entry.catch.place.name,
             }))}
         />
       </section>

@@ -81,6 +81,10 @@ export async function updateSpeciesAction(id: string, data: FormData) {
       difficulty: optionalNumber(data.get("difficulty")),
       rarity: String(data.get("rarity")) as
         "COMMON" | "RARE" | "VERY_RARE" | "LEGENDARY",
+      aquariumBehavior: String(data.get("aquariumBehavior")) as
+        | "FREE_SWIMMER"
+        | "BOTTOM_DWELLER"
+        | "CEPHALOPOD",
       techniques: list(data.get("techniques")),
       baits: list(data.get("baits")),
       conservationStatus: String(data.get("conservationStatus") || "") || null,

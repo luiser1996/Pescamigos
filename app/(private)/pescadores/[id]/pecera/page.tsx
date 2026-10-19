@@ -17,7 +17,7 @@ export default async function AquariumEditPage({
   const [catches, saved, status] = await Promise.all([
     prisma.catch.findMany({
       where: { fisherId: id, deletedAt: null },
-      include: { species: true },
+      include: { species: true, place: true },
       orderBy: { caughtAt: "desc" },
     }),
     prisma.aquariumFish.findMany({
@@ -35,7 +35,9 @@ export default async function AquariumEditPage({
           name: item.species.commonName,
           lengthCm: Number(item.lengthCm),
           catalogImageId: item.species.catalogImageId,
+          behavior: item.species.aquariumBehavior,
           caughtAt: formatDate(item.caughtAt),
+          placeName: item.place.name,
         }))}
         initialIds={saved.map((item) => item.catchId)}
       />

@@ -131,6 +131,14 @@ export default async function EditSpecies({
             <option value="LEGENDARY">Legendario</option>
           </select>
         </label>
+        <label className="field">
+          Movimiento en la pecera
+          <select name="aquariumBehavior" defaultValue={item.aquariumBehavior}>
+            <option value="FREE_SWIMMER">Natación libre</option>
+            <option value="BOTTOM_DWELLER">Especie de fondo</option>
+            <option value="CEPHALOPOD">Calamar, sepia o pulpo</option>
+          </select>
+        </label>
         {fields.map(([name, label]) => (
           <label className="field" key={name}>
             {label}

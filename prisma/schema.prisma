@@ -30,6 +30,12 @@ enum Rarity {
   LEGENDARY
 }
 
+enum AquariumBehavior {
+  FREE_SWIMMER
+  BOTTOM_DWELLER
+  CEPHALOPOD
+}
+
 enum FishingMode {
   SHORE
   BOAT
@@ -112,6 +118,7 @@ model Species {
   usualDepth            String?
   difficulty            Int?
   rarity                Rarity             @default(COMMON)
+  aquariumBehavior      AquariumBehavior   @default(FREE_SWIMMER)
   techniques            String[]           @default([])
   baits                 String[]           @default([])
   conservationStatus    String?

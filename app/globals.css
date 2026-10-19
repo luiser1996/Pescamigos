@@ -340,7 +340,7 @@ h2 {
   right: 0;
   bottom: 0;
   left: 0;
-  height: 38px;
+  height: 42px;
   background:
     radial-gradient(circle at 12px 7px, #9d743a 0 2px, transparent 2.5px),
     radial-gradient(circle at 32px 20px, #c49a57 0 2px, transparent 2.5px),
@@ -356,9 +356,22 @@ h2 {
   aspect-ratio: 1.72;
   will-change: transform;
   filter: drop-shadow(0 5px 5px #164f5b55);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
 }
 .aquarium-fish img {
   object-fit: contain;
+}
+.aquarium-fish:focus-visible,
+.aquarium-fish[aria-pressed="true"] {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.aquarium-fish-cephalopod img {
+  animation: cephalopod-pulse 1.7s ease-in-out infinite;
 }
 .aquarium-fish > span {
   display: grid;
@@ -378,6 +391,44 @@ h2 {
   font-weight: 850;
   text-align: center;
 }
+.aquarium-fish-details {
+  position: absolute;
+  z-index: 900;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  min-width: 180px;
+  max-width: min(280px, calc(100% - 28px));
+  gap: 3px;
+  padding: 0.85rem 2.4rem 0.85rem 1rem;
+  border: 1px solid #ffffff99;
+  border-radius: 13px;
+  background: #fffdf5ed;
+  box-shadow: 0 10px 24px #174e5a38;
+  color: var(--ink);
+}
+.aquarium-fish-details span {
+  color: #52705b;
+  font-size: 0.88rem;
+}
+.aquarium-fish-details a {
+  margin-top: 5px;
+  color: #347454;
+  font-weight: 850;
+}
+.aquarium-details-close {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
 .aquarium-editor {
   display: grid;
   gap: 1.5rem;
@@ -387,6 +438,25 @@ h2 {
 }
 .aquarium-catch-selector h2 {
   margin-top: 0;
+}
+.aquarium-selector-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+.aquarium-selected-filter {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  font-weight: 750;
+}
+.aquarium-selected-filter input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--leaf);
 }
 .aquarium-catch-grid {
   display: grid;
@@ -441,9 +511,41 @@ h2 {
 .aquarium-option-image img {
   object-fit: contain;
 }
+.aquarium-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 1rem;
+}
+.aquarium-pagination button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #b8d6bd;
+  border-radius: 9px;
+  background: #fffef9;
+  color: var(--ink);
+  font-weight: 850;
+  cursor: pointer;
+}
+.aquarium-pagination button.active {
+  border-color: var(--leaf);
+  background: var(--leaf);
+  color: #fff;
+}
+.aquarium-pagination button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
 @keyframes aquarium-light {
   from { transform: translateX(-4%); }
   to { transform: translateX(5%); }
+}
+@keyframes cephalopod-pulse {
+  0%, 100% { transform: scale(0.94); }
+  45% { transform: scale(1.04); }
+  65% { transform: scale(0.98); }
 }
 @media (prefers-reduced-motion: reduce) {
   .aquarium-water-light {
@@ -484,6 +586,14 @@ h2 {
   }
   .aquarium-catch-grid {
     grid-template-columns: 1fr;
+  }
+  .aquarium-selector-filters {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .aquarium-fish-details {
+    top: 10px;
+    right: 10px;
   }
 }
 .stats-section {
