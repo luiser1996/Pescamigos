@@ -74,6 +74,7 @@ model User {
   avatarImageId       String?          @unique
   avatarImage         StoredImage?     @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
   lostLures           Int              @default(0)
+  chestsOpened        Int              @default(0)
   favoriteLureImageId String?          @unique
   favoriteLureName    String?
   nickname            String?

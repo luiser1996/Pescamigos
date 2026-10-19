@@ -50,14 +50,21 @@ export async function openChestAction(
   const item = randomDecoration(randomRarity());
   const opened = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
-    const [awarded, used] = await Promise.all([
+    const [awarded, account] = await Promise.all([
       tx.catch.aggregate({
         where: { fisherId: user.id },
         _sum: { chestsAwarded: true },
       }),
-      tx.userDecoration.count({ where: { userId: user.id, source: "CHEST" } }),
+      tx.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: { chestsOpened: true },
+      }),
     ]);
-    if ((awarded._sum.chestsAwarded ?? 0) <= used) return false;
+    if ((awarded._sum.chestsAwarded ?? 0) <= account.chestsOpened) return false;
+    await tx.user.update({
+      where: { id: user.id },
+      data: { chestsOpened: { increment: 1 } },
+    });
     await tx.userDecoration.create({
       data: {
         userId: user.id,
@@ -90,7 +97,12 @@ export async function craftDecorationsAction(
   const reward = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
     const owned = await tx.userDecoration.findMany({
-      where: { id: { in: ids }, userId: user.id },
+      where: {
+        id: { in: ids },
+        userId: user.id,
+        xPct: null,
+        yPct: null,
+      },
     });
     if (owned.length !== 3 || new Set(owned.map((x) => x.rarity)).size !== 1)
       return null;
@@ -130,7 +142,7 @@ export async function dismantleDecorationAction(
   const rewards = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
     const owned = await tx.userDecoration.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, xPct: null, yPct: null },
     });
     if (!owned) return null;
     const index = rarityOrder.indexOf(owned.rarity);

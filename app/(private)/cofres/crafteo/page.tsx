@@ -6,8 +6,17 @@ export default async function CraftingPage() {
   const user = await requireUser();
   const items = await prisma.userDecoration.findMany({
     where: { userId: user.id },
-    select: { id: true, slug: true, rarity: true },
+    select: { id: true, slug: true, rarity: true, xPct: true, yPct: true },
     orderBy: { acquiredAt: "desc" },
   });
-  return <DecorationCrafting items={items} />;
+  return (
+    <DecorationCrafting
+      items={items.map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        rarity: item.rarity,
+        isPlaced: item.xPct != null && item.yPct != null,
+      }))}
+    />
+  );
 }

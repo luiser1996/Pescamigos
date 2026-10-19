@@ -168,6 +168,13 @@ export function AquariumEditor({
               ),
             )
           }
+          onResizeDecoration={(id, scale) =>
+            setPlaced((current) =>
+              current.map((item) =>
+                item.id === id ? { ...item, scale } : item,
+              ),
+            )
+          }
         />
       </section>
       <section className="card aquarium-decoration-selector">

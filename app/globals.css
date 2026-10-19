@@ -565,6 +565,20 @@ h2 {
   filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff)
     drop-shadow(0 5px 5px #164f5b55);
 }
+.aquarium-resize-handle {
+  position: absolute;
+  right: -9px;
+  bottom: -9px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 5px;
+  background: var(--leaf);
+  box-shadow: 0 2px 7px #173a3366;
+  cursor: nwse-resize;
+  touch-action: none;
+}
 .aquarium-decoration-details {
   display: grid;
   grid-template-columns: 1fr;
@@ -852,6 +866,14 @@ h2 {
   color: #fff;
   font-size: 0.82rem;
   font-weight: 900;
+}
+.craft-item-placed {
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: #fff9d9;
+  color: #6e5712;
+  font-size: 0.78rem;
+  font-weight: 850;
 }
 .craft-quantity {
   display: grid;

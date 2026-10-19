@@ -14,9 +14,15 @@ import {
 } from "@/lib/decorations";
 
 type Rarity = (typeof rarityOrder)[number];
-type Item = { id: string; slug: string; rarity: Rarity };
+type Item = { id: string; slug: string; rarity: Rarity; isPlaced: boolean };
 type Result = { nonce: string; rewards: string[]; kind: "craft" | "dismantle" };
-type Group = { slug: string; rarity: Rarity; ids: string[] };
+type Group = {
+  slug: string;
+  rarity: Rarity;
+  ids: string[];
+  availableIds: string[];
+  placedCount: number;
+};
 
 const emptyState: CraftState = {};
 
@@ -25,9 +31,18 @@ function grouped(items: Item[]) {
   for (const item of items) {
     const key = `${item.rarity}:${item.slug}`;
     const current = groups.get(key);
-    if (current) current.ids.push(item.id);
-    else
-      groups.set(key, { slug: item.slug, rarity: item.rarity, ids: [item.id] });
+    if (current) {
+      current.ids.push(item.id);
+      if (item.isPlaced) current.placedCount += 1;
+      else current.availableIds.push(item.id);
+    } else
+      groups.set(key, {
+        slug: item.slug,
+        rarity: item.rarity,
+        ids: [item.id],
+        availableIds: item.isPlaced ? [] : [item.id],
+        placedCount: item.isPlaced ? 1 : 0,
+      });
   }
   return [...groups.values()].sort((a, b) =>
     (decorationBySlug.get(a.slug)?.name ?? a.slug).localeCompare(
@@ -74,7 +89,7 @@ export function DecorationCrafting({ items }: { items: Item[] }) {
     setSelected((current) => {
       const amount = Math.max(
         0,
-        Math.min(group.ids.length, (current[group.slug] ?? 0) + delta),
+        Math.min(group.availableIds.length, (current[group.slug] ?? 0) + delta),
       );
       const next = { ...current };
       if (amount) next[group.slug] = amount;
@@ -86,7 +101,9 @@ export function DecorationCrafting({ items }: { items: Item[] }) {
   const chosenIds = (rarity: Rarity) =>
     groups
       .filter((group) => group.rarity === rarity)
-      .flatMap((group) => group.ids.slice(0, selected[group.slug] ?? 0));
+      .flatMap((group) =>
+        group.availableIds.slice(0, selected[group.slug] ?? 0),
+      );
 
   return (
     <div className="craft-page">
@@ -96,6 +113,10 @@ export function DecorationCrafting({ items }: { items: Item[] }) {
           <p>
             Combina 3 objetos de la misma rareza para obtener uno del nivel
             siguiente, o desmantela uno para recibir 3 del nivel anterior.
+          </p>
+          <p>
+            Los objetos marcados como <b>en la pecera</b> están protegidos: para
+            usarlos primero debes retirarlos desde el editor de la pecera.
           </p>
         </div>
       </header>
@@ -168,6 +189,11 @@ export function DecorationCrafting({ items }: { items: Item[] }) {
                     <span className="craft-item-count">
                       ×{group.ids.length}
                     </span>
+                    {group.placedCount > 0 && (
+                      <span className="craft-item-placed">
+                        {group.placedCount} en la pecera
+                      </span>
+                    )}
                     <DecorationSprite slug={group.slug} />
                     <b>{definition?.name ?? group.slug}</b>
                     <div
@@ -186,7 +212,7 @@ export function DecorationCrafting({ items }: { items: Item[] }) {
                       <button
                         type="button"
                         onClick={() => changeAmount(group, 1)}
-                        disabled={amount >= group.ids.length || busy}
+                        disabled={amount >= group.availableIds.length || busy}
                         aria-label="Añadir una unidad"
                       >
                         +

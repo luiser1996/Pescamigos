@@ -59,6 +59,9 @@ export const decorationOdds: Record<Rarity, number> = {
 export const chestsForPoints = (points: number) =>
   1 + Math.floor(Math.max(0, points) / 300);
 
+export const remainingChests = (awarded: number, opened: number) =>
+  Math.max(0, awarded - opened);
+
 export const decorations: DecorationDefinition[] = [
   ...make(
     "COMMON",

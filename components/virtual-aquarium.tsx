@@ -51,6 +51,16 @@ type DecorationDrag = {
   offsetY: number;
 };
 
+type DecorationResize = {
+  id: string;
+  pointerId: number;
+  centerX: number;
+  centerY: number;
+  startDistance: number;
+  startScale: number;
+  currentScale: number;
+};
+
 const SAND_HEIGHT = 53;
 const fishWidth = (lengthCm: number) =>
   Math.min(245, Math.max(36, lengthCm * 2.35));
@@ -73,6 +83,7 @@ export function VirtualAquarium({
   onSelectDecoration,
   onChangeDecorationLayer,
   onToggleDecorationCoversFish,
+  onResizeDecoration,
   onRemoveFish,
   pendingDecorationId,
 }: {
@@ -84,18 +95,24 @@ export function VirtualAquarium({
   onSelectDecoration?: (id: string | null) => void;
   onChangeDecorationLayer?: (id: string, action: DecorationLayerAction) => void;
   onToggleDecorationCoversFish?: (id: string) => void;
+  onResizeDecoration?: (id: string, scale: number) => void;
   onRemoveFish?: (id: string) => void;
   pendingDecorationId?: string | null;
 }) {
   const tankRef = useRef<HTMLDivElement>(null);
   const fishRefs = useRef(new Map<string, HTMLButtonElement>());
   const decorationDrag = useRef<DecorationDrag | null>(null);
+  const decorationResize = useRef<DecorationResize | null>(null);
   const decorationDragMoved = useRef(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [decorationPreview, setDecorationPreview] = useState<{
     id: string;
     xPct: number;
     yPct: number;
+  } | null>(null);
+  const [decorationScalePreview, setDecorationScalePreview] = useState<{
+    id: string;
+    scale: number;
   } | null>(null);
   const [spriteScales, setSpriteScales] = useState<Record<string, number>>({});
   const [sparkling, setSparkling] = useState<Set<string>>(() => new Set());
@@ -377,7 +394,7 @@ export function VirtualAquarium({
           style={{
             left: `${decorationPreview?.id === item.id ? decorationPreview.xPct : item.xPct}%`,
             top: `${decorationPreview?.id === item.id ? decorationPreview.yPct : item.yPct}%`,
-            transform: `translate(-50%, -50%) scale(${item.scale})`,
+            transform: `translate(-50%, -50%) scale(${decorationScalePreview?.id === item.id ? decorationScalePreview.scale : item.scale})`,
             zIndex: (item.coversFish ? 700 : 100) + item.layer,
           }}
           onClick={(event) => {
@@ -454,6 +471,74 @@ export function VirtualAquarium({
           title={editableDecorations ? "Seleccionar para recolocar" : undefined}
         >
           <DecorationSprite slug={item.slug} />
+          {editableDecorations && pendingDecorationId === item.id && (
+            <button
+              type="button"
+              className="aquarium-resize-handle"
+              aria-label="Redimensionar decoración"
+              title="Arrastra para cambiar el tamaño"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => {
+                if (!event.isPrimary || event.button !== 0 || !tankRef.current)
+                  return;
+                event.preventDefault();
+                event.stopPropagation();
+                const bounds = tankRef.current.getBoundingClientRect();
+                const centerX = bounds.left + (item.xPct / 100) * bounds.width;
+                const centerY = bounds.top + (item.yPct / 100) * bounds.height;
+                decorationResize.current = {
+                  id: item.id,
+                  pointerId: event.pointerId,
+                  centerX,
+                  centerY,
+                  startDistance: Math.max(
+                    1,
+                    Math.hypot(
+                      event.clientX - centerX,
+                      event.clientY - centerY,
+                    ),
+                  ),
+                  startScale: item.scale,
+                  currentScale: item.scale,
+                };
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onPointerMove={(event) => {
+                const resize = decorationResize.current;
+                if (!resize || resize.pointerId !== event.pointerId) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const distance = Math.hypot(
+                  event.clientX - resize.centerX,
+                  event.clientY - resize.centerY,
+                );
+                const scale = Math.max(
+                  0.5,
+                  Math.min(
+                    2,
+                    resize.startScale * (distance / resize.startDistance),
+                  ),
+                );
+                resize.currentScale = scale;
+                setDecorationScalePreview({ id: resize.id, scale });
+              }}
+              onPointerUp={(event) => {
+                const resize = decorationResize.current;
+                if (!resize || resize.pointerId !== event.pointerId) return;
+                event.preventDefault();
+                event.stopPropagation();
+                if (event.currentTarget.hasPointerCapture(event.pointerId))
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                decorationResize.current = null;
+                setDecorationScalePreview(null);
+                onResizeDecoration?.(resize.id, resize.currentScale);
+              }}
+              onPointerCancel={() => {
+                decorationResize.current = null;
+                setDecorationScalePreview(null);
+              }}
+            />
+          )}
         </span>
       ))}
       {fish.length === 0 && (

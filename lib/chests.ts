@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { scoreBonusesFor, scoreCatch, scoringContext } from "@/lib/ranking";
-import { chestsForPoints } from "@/lib/decorations";
+import { chestsForPoints, remainingChests } from "@/lib/decorations";
 
 export async function ensureChestAwards(userId?: string) {
   const [pending, allCatches] = await Promise.all([
@@ -35,12 +35,15 @@ export async function ensureChestAwards(userId?: string) {
 
 export async function availableChests(userId: string) {
   await ensureChestAwards(userId);
-  const [awarded, opened] = await Promise.all([
+  const [awarded, user] = await Promise.all([
     prisma.catch.aggregate({
       where: { fisherId: userId },
       _sum: { chestsAwarded: true },
     }),
-    prisma.userDecoration.count({ where: { userId, source: "CHEST" } }),
+    prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { chestsOpened: true },
+    }),
   ]);
-  return Math.max(0, (awarded._sum.chestsAwarded ?? 0) - opened);
+  return remainingChests(awarded._sum.chestsAwarded ?? 0, user.chestsOpened);
 }
