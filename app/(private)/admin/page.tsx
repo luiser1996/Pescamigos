@@ -43,7 +43,6 @@ export default async function Admin({
     placeTotal,
     archivedSpecies,
     archivedPlaces,
-    storage,
   ] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.species.findMany({
@@ -68,7 +67,6 @@ export default async function Admin({
       where: { archivedAt: { not: null } },
       orderBy: { name: "asc" },
     }),
-    prisma.catchPhoto.aggregate({ _sum: { sizeBytes: true }, _count: true }),
   ]);
   return (
     <>
@@ -83,18 +81,6 @@ export default async function Admin({
           ✓ {status.imported} especies importadas o actualizadas.
         </p>
       )}
-      <section className="card admin-aquarium-entry">
-        <div>
-          <h2>Simulador de forja</h2>
-          <p>
-            Prueba la forja y el desmantelado con un inventario ampliado basado
-            en los objetos de Luis, sin modificar su cuenta.
-          </p>
-        </div>
-        <Link className="button" href="/admin/crafteo">
-          Abrir simulador
-        </Link>
-      </section>
       <div
         style={{
           display: "grid",
@@ -182,17 +168,6 @@ export default async function Admin({
           >
             Exportar catálogo JSON
           </Link>
-        </section>
-        <section className="card" style={{ padding: "1.2rem" }}>
-          <h2>Almacenamiento</h2>
-          <p>{storage._count} fotografías originales.</p>
-          <p>
-            {((storage._sum.sizeBytes ?? 0) / 1024 / 1024).toFixed(1)} MB en
-            originales registrados, más miniaturas y versiones web.
-          </p>
-          <p>
-            Ruta: <code>{process.env.PHOTO_STORAGE_PATH ?? "./storage"}</code>
-          </p>
         </section>
       </div>
       <h2>Especies activas ({speciesTotal})</h2>

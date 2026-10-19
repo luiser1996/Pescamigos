@@ -8,7 +8,6 @@ import {
 } from "@/app/actions/decorations";
 import { DecorationSprite } from "@/components/decoration-sprite";
 import {
-  decorations,
   decorationBySlug,
   decorationRarityLabels,
   rarityOrder,
@@ -38,26 +37,8 @@ function grouped(items: Item[]) {
   );
 }
 
-function randomReward(rarity: Rarity) {
-  const pool = decorations.filter((item) => item.rarity === rarity);
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-export function DecorationCrafting({
-  items,
-  simulated = false,
-  ownerName,
-}: {
-  items: Item[];
-  simulated?: boolean;
-  ownerName?: string;
-}) {
-  const [inventory, setInventory] = useState(items);
+export function DecorationCrafting({ items }: { items: Item[] }) {
   const [selected, setSelected] = useState<Record<string, number>>({});
-  const [result, setResult] = useState<Result | null>(null);
-  const [simulationKind, setSimulationKind] = useState<Result["kind"] | null>(
-    null,
-  );
   const [lastAction, setLastAction] = useState<Result["kind"] | null>(null);
   const resultRef = useRef<HTMLElement>(null);
   const [craftState, craftAction, craftPending] = useActionState(
@@ -68,15 +49,11 @@ export function DecorationCrafting({
     dismantleDecorationAction,
     emptyState,
   );
-  const groups = useMemo(
-    () => grouped(simulated ? inventory : items),
-    [inventory, items, simulated],
-  );
-  const busy = craftPending || dismantlePending || simulationKind !== null;
+  const groups = useMemo(() => grouped(items), [items]);
+  const busy = craftPending || dismantlePending;
   const serverResult = lastAction === "dismantle" ? dismantleState : craftState;
-  const visibleResult = simulated
-    ? result
-    : serverResult.nonce && serverResult.rewards && serverResult.kind
+  const visibleResult =
+    serverResult.nonce && serverResult.rewards && serverResult.kind
       ? {
           nonce: serverResult.nonce,
           rewards: serverResult.rewards,
@@ -94,7 +71,6 @@ export function DecorationCrafting({
   }, [busy, resultNonce]);
 
   const changeAmount = (group: Group, delta: number) => {
-    setResult(null);
     setSelected((current) => {
       const amount = Math.max(
         0,
@@ -112,52 +88,16 @@ export function DecorationCrafting({
       .filter((group) => group.rarity === rarity)
       .flatMap((group) => group.ids.slice(0, selected[group.slug] ?? 0));
 
-  const simulate = (rarity: Rarity, kind: "craft" | "dismantle") => {
-    const rarityIndex = rarityOrder.indexOf(rarity);
-    const ids = chosenIds(rarity);
-    if (kind === "craft" ? ids.length !== 3 : ids.length !== 1) return;
-    setSimulationKind(kind);
-    setResult(null);
-    window.setTimeout(() => {
-      const rewardRarity =
-        rarityOrder[kind === "craft" ? rarityIndex + 1 : rarityIndex - 1];
-      const rewards = Array.from({ length: kind === "craft" ? 1 : 3 }, () =>
-        randomReward(rewardRarity),
-      );
-      setInventory((current) => [
-        ...current.filter((item) => !ids.includes(item.id)),
-        ...rewards.map((reward) => ({
-          id: `sim-${crypto.randomUUID()}`,
-          slug: reward.slug,
-          rarity: reward.rarity,
-        })),
-      ]);
-      setSelected({});
-      setResult({
-        nonce: crypto.randomUUID(),
-        rewards: rewards.map((reward) => reward.slug),
-        kind,
-      });
-      setSimulationKind(null);
-    }, 1100);
-  };
-
   return (
     <div className="craft-page">
       <header className="card craft-header">
         <div>
-          <h1>{simulated ? "Simulador de forja" : "Forja de decoraciones"}</h1>
+          <h1>Forja de decoraciones</h1>
           <p>
             Combina 3 objetos de la misma rareza para obtener uno del nivel
             siguiente, o desmantela uno para recibir 3 del nivel anterior.
           </p>
         </div>
-        {simulated && (
-          <span className="craft-simulator-notice">
-            Inventario ampliado basado en {ownerName ?? "Luis"}. Ningún objeto
-            real se modifica.
-          </span>
-        )}
       </header>
 
       {(busy || visibleResult || craftState.error || dismantleState.error) && (
@@ -169,11 +109,7 @@ export function DecorationCrafting({
           {busy ? (
             <div className="crafting-animation">
               <span aria-hidden="true">✦</span>
-              <b>
-                {simulationKind === "craft" || craftPending
-                  ? "Forjando…"
-                  : "Desmantelando…"}
-              </b>
+              <b>{craftPending ? "Forjando…" : "Desmantelando…"}</b>
             </div>
           ) : visibleResult ? (
             <div className="craft-reveal" key={visibleResult.nonce}>
@@ -261,61 +197,41 @@ export function DecorationCrafting({
               })}
             </div>
             <div className="craft-actions">
-              {rarity !== "LEGENDARY" &&
-                (simulated ? (
+              {rarity !== "LEGENDARY" && (
+                <form action={craftAction}>
+                  {ids.map((id) => (
+                    <input
+                      key={id}
+                      type="hidden"
+                      name="decorationIds"
+                      value={id}
+                    />
+                  ))}
                   <button
-                    type="button"
                     className="button"
                     disabled={!canCraft || busy}
-                    onClick={() => simulate(rarity, "craft")}
+                    onClick={() => setLastAction("craft")}
                   >
                     Forjar objeto superior ({ids.length}/3)
                   </button>
-                ) : (
-                  <form action={craftAction}>
-                    {ids.map((id) => (
-                      <input
-                        key={id}
-                        type="hidden"
-                        name="decorationIds"
-                        value={id}
-                      />
-                    ))}
-                    <button
-                      className="button"
-                      disabled={!canCraft || busy}
-                      onClick={() => setLastAction("craft")}
-                    >
-                      Forjar objeto superior ({ids.length}/3)
-                    </button>
-                  </form>
-                ))}
-              {rarity !== "COMMON" &&
-                (simulated ? (
+                </form>
+              )}
+              {rarity !== "COMMON" && (
+                <form action={dismantleAction}>
+                  <input
+                    type="hidden"
+                    name="decorationId"
+                    value={ids[0] ?? ""}
+                  />
                   <button
-                    type="button"
                     className="button secondary"
                     disabled={!canDismantle || busy}
-                    onClick={() => simulate(rarity, "dismantle")}
+                    onClick={() => setLastAction("dismantle")}
                   >
                     Desmantelar objeto
                   </button>
-                ) : (
-                  <form action={dismantleAction}>
-                    <input
-                      type="hidden"
-                      name="decorationId"
-                      value={ids[0] ?? ""}
-                    />
-                    <button
-                      className="button secondary"
-                      disabled={!canDismantle || busy}
-                      onClick={() => setLastAction("dismantle")}
-                    >
-                      Desmantelar objeto
-                    </button>
-                  </form>
-                ))}
+                </form>
+              )}
             </div>
           </section>
         );
