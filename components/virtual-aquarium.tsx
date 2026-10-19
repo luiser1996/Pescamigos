@@ -17,6 +17,7 @@ export type AquariumFish = {
   behavior: AquariumBehavior;
   caughtAt?: string;
   placeName?: string;
+  isRecord?: boolean;
 };
 
 type Motion = {
@@ -52,7 +53,44 @@ export function VirtualAquarium({
   const tankRef = useRef<HTMLDivElement>(null);
   const fishRefs = useRef(new Map<string, HTMLButtonElement>());
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [spriteScales, setSpriteScales] = useState<Record<string, number>>({});
   const activeFish = fish.find((item) => item.id === activeId);
+
+  const normalizeSprite = (
+    id: string,
+    image: HTMLImageElement,
+  ) => {
+    if (!image.naturalWidth || spriteScales[id]) return;
+    const reduction = Math.min(1, 600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * reduction));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * reduction));
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return;
+    try {
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let left = canvas.width;
+      let right = -1;
+      for (let y = 0; y < canvas.height; y += 1) {
+        for (let x = 0; x < canvas.width; x += 1) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 16) {
+            left = Math.min(left, x);
+            right = Math.max(right, x);
+          }
+        }
+      }
+      if (right < left) return;
+      const sourceAspect = canvas.width / canvas.height;
+      const renderedWidthFraction = Math.min(1, sourceAspect / 1.72);
+      const visibleWidthFraction =
+        renderedWidthFraction * ((right - left + 1) / canvas.width);
+      const scale = Math.min(2.8, Math.max(1, 0.9 / visibleWidthFraction));
+      setSpriteScales((current) => ({ ...current, [id]: scale }));
+    } catch {
+      setSpriteScales((current) => ({ ...current, [id]: 1 }));
+    }
+  };
 
   useEffect(() => {
     const tank = tankRef.current;
@@ -174,15 +212,28 @@ export function VirtualAquarium({
           onClick={() => setActiveId(activeId === item.id ? null : item.id)}
         >
           {item.catalogImageId ? (
-            <Image
-              unoptimized
-              fill
-              sizes="260px"
-              src={`/api/assets/${item.catalogImageId}`}
-              alt={`${item.name}, ${item.lengthCm} cm`}
-            />
+            <span
+              className="aquarium-fish-art"
+              style={{ transform: `scale(${spriteScales[item.id] ?? 1})` }}
+            >
+              <Image
+                unoptimized
+                fill
+                sizes="260px"
+                src={`/api/assets/${item.catalogImageId}`}
+                alt={`${item.name}, ${item.lengthCm} cm`}
+                onLoad={(event) => normalizeSprite(item.id, event.currentTarget)}
+              />
+            </span>
           ) : (
-            <span aria-label={item.name}>🐟</span>
+            <span className="aquarium-fish-placeholder" aria-label={item.name}>
+              🐟
+            </span>
+          )}
+          {item.isRecord && (
+            <span className="aquarium-record-sparkles" aria-hidden="true">
+              ✦
+            </span>
           )}
         </button>
       ))}
@@ -196,11 +247,24 @@ export function VirtualAquarium({
           >
             ×
           </button>
-          <b>{activeFish.name}</b>
-          <span>{activeFish.lengthCm} cm</span>
-          {activeFish.caughtAt && <span>{activeFish.caughtAt}</span>}
-          {activeFish.placeName && <span>{activeFish.placeName}</span>}
-          <Link href={`/capturas/${activeFish.id}`}>Ver recuerdo</Link>
+          <div className="aquarium-details-copy">
+            <b>{activeFish.name}</b>
+            <span>{activeFish.lengthCm} cm</span>
+            {activeFish.caughtAt && <span>{activeFish.caughtAt}</span>}
+            {activeFish.placeName && <span>{activeFish.placeName}</span>}
+            <Link href={`/capturas/${activeFish.id}`}>Ver recuerdo</Link>
+          </div>
+          {activeFish.catalogImageId && (
+            <span className="aquarium-details-image">
+              <Image
+                unoptimized
+                fill
+                sizes="100px"
+                src={`/api/assets/${activeFish.catalogImageId}`}
+                alt={activeFish.name}
+              />
+            </span>
+          )}
         </aside>
       )}
       <div className="aquarium-sand" aria-hidden="true" />

@@ -3,6 +3,7 @@ import { AquariumEditor } from "@/components/aquarium-editor";
 import { requireUser } from "@/lib/auth";
 import { formatDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
+import { recordIds } from "@/lib/ranking";
 
 export default async function AquariumEditPage({
   params,
@@ -14,7 +15,7 @@ export default async function AquariumEditPage({
   const actor = await requireUser();
   const { id } = await params;
   if (actor.id !== id) notFound();
-  const [catches, saved, status] = await Promise.all([
+  const [catches, saved, status, allCatches] = await Promise.all([
     prisma.catch.findMany({
       where: { fisherId: id, deletedAt: null },
       include: { species: true, place: true },
@@ -25,7 +26,12 @@ export default async function AquariumEditPage({
       select: { catchId: true },
     }),
     searchParams,
+    prisma.catch.findMany({
+      where: { deletedAt: null },
+      include: { species: true },
+    }),
   ]);
+  const records = recordIds(allCatches);
   return (
     <>
       {status.error && <p role="alert" className="form-error">{status.error}</p>}
@@ -37,7 +43,9 @@ export default async function AquariumEditPage({
           catalogImageId: item.species.catalogImageId,
           behavior: item.species.aquariumBehavior,
           caughtAt: formatDate(item.caughtAt),
+          caughtAtValue: item.caughtAt.getTime(),
           placeName: item.place.name,
+          isRecord: records.has(item.id),
         }))}
         initialIds={saved.map((item) => item.catchId)}
       />

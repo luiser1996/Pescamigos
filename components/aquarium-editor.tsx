@@ -3,10 +3,11 @@
 import Image from "next/image";
 import { useState } from "react";
 import { saveAquariumAction } from "@/app/actions/aquarium";
+import { FilterPanel } from "@/components/filter-panel";
 import { SubmitButton } from "@/components/submit-button";
 import { type AquariumFish, VirtualAquarium } from "@/components/virtual-aquarium";
 
-type CatchOption = AquariumFish & { caughtAt: string };
+type CatchOption = AquariumFish & { caughtAt: string; caughtAtValue: number };
 
 export function AquariumEditor({
   catches,
@@ -18,15 +19,22 @@ export function AquariumEditor({
   const [selected, setSelected] = useState(() => new Set(initialIds));
   const [query, setQuery] = useState("");
   const [onlySelected, setOnlySelected] = useState(false);
+  const [ascending, setAscending] = useState(false);
   const [page, setPage] = useState(1);
   const preview = catches.filter((item) => selected.has(item.id));
   const normalizedQuery = query.trim().toLocaleLowerCase("es");
-  const filtered = catches.filter(
-    (item) =>
-      (!normalizedQuery ||
-        item.name.toLocaleLowerCase("es").includes(normalizedQuery)) &&
-      (!onlySelected || selected.has(item.id)),
-  );
+  const filtered = [...catches]
+    .filter(
+      (item) =>
+        (!normalizedQuery ||
+          item.name.toLocaleLowerCase("es").includes(normalizedQuery)) &&
+        (!onlySelected || selected.has(item.id)),
+    )
+    .sort((a, b) =>
+      ascending
+        ? a.caughtAtValue - b.caughtAtValue
+        : b.caughtAtValue - a.caughtAtValue,
+    );
   const totalPages = Math.max(1, Math.ceil(filtered.length / 8));
   const currentPage = Math.min(page, totalPages);
   const visible = filtered.slice((currentPage - 1) * 8, currentPage * 8);
@@ -53,31 +61,43 @@ export function AquariumEditor({
       </section>
       <section className="card aquarium-catch-selector">
         <h2>Tus peces</h2>
-        <div className="aquarium-selector-filters">
-          <label className="field">
-            Filtrar por especie
-            <input
-              type="search"
-              value={query}
-              placeholder="Ej. black bass"
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-            />
-          </label>
-          <label className="aquarium-selected-filter">
-            <input
-              type="checkbox"
-              checked={onlySelected}
-              onChange={(event) => {
-                setOnlySelected(event.target.checked);
-                setPage(1);
-              }}
-            />
-            Mostrar solo los añadidos
-          </label>
-        </div>
+        <FilterPanel label="Filtrar capturas">
+          <div className="aquarium-selector-filters">
+            <label className="field">
+              Especie
+              <input
+                type="search"
+                value={query}
+                placeholder="Ej. black bass"
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setPage(1);
+                }}
+              />
+            </label>
+            <label className="aquarium-selected-filter">
+              <input
+                type="checkbox"
+                checked={onlySelected}
+                onChange={(event) => {
+                  setOnlySelected(event.target.checked);
+                  setPage(1);
+                }}
+              />
+              Mostrar solo los añadidos
+            </label>
+          </div>
+        </FilterPanel>
+        <button
+          type="button"
+          className="button secondary aquarium-order-toggle"
+          onClick={() => {
+            setAscending((current) => !current);
+            setPage(1);
+          }}
+        >
+          {ascending ? "↑ Más antiguas primero" : "↓ Más recientes primero"}
+        </button>
         {catches.length === 0 ? (
           <p>Aún no tienes capturas que puedas añadir.</p>
         ) : visible.length === 0 ? (

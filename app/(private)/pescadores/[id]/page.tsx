@@ -419,6 +419,7 @@ export default async function FisherProfile({
               behavior: entry.catch.species.aquariumBehavior,
               caughtAt: formatDate(entry.catch.caughtAt),
               placeName: entry.catch.place.name,
+              isRecord: scoring.speciesRecords.has(entry.catch.id),
             }))}
         />
       </section>
