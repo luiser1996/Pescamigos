@@ -66,6 +66,7 @@ model User {
   favoriteLureName    String?
   nickname            String?
   favoriteLureImage   StoredImage?   @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
+  aquariumFish        AquariumFish[]
 }
 
 model Session {
@@ -213,10 +214,23 @@ model Catch {
   technique      Technique?       @relation(fields: [techniqueId], references: [id], onDelete: SetNull)
   baitOrLure     BaitOrLure?      @relation(fields: [baitOrLureId], references: [id], onDelete: SetNull)
   photos         CatchPhoto[]
+  aquariumFish   AquariumFish[]
 
   @@index([fisherId, caughtAt])
   @@index([speciesId, fisherId, deletedAt])
   @@index([placeId, caughtAt])
+}
+
+model AquariumFish {
+  id        String   @id @default(cuid())
+  userId    String
+  catchId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  catch     Catch    @relation(fields: [catchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, catchId])
+  @@index([userId, createdAt])
 }
 
 model CatchPhoto {

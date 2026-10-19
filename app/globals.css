@@ -277,6 +277,179 @@ h2 {
   color: #52705b;
   font-weight: 800;
 }
+.profile-aquarium-section {
+  margin-top: 2rem;
+}
+.profile-aquarium-heading,
+.aquarium-editor-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 0.9rem;
+}
+.profile-aquarium-heading h2,
+.aquarium-editor-heading h1 {
+  margin-bottom: 0.3rem;
+}
+.profile-aquarium-heading p,
+.aquarium-editor-heading p {
+  margin: 0;
+  color: #52705b;
+}
+.aquarium-saved {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: #dff3df;
+  font-weight: 800;
+}
+.virtual-aquarium {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(330px, 48vw, 500px);
+  overflow: hidden;
+  border: 8px solid #31584f;
+  border-top-color: #426f64;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, #bdebf0 0%, #72c4cc 46%, #3f9ca8 100%);
+  box-shadow:
+    inset 0 0 38px #174e5a4d,
+    0 14px 35px #193c3226;
+}
+.virtual-aquarium-compact {
+  height: clamp(280px, 40vw, 420px);
+}
+.aquarium-water-light {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 32px;
+  opacity: 0.34;
+  background: repeating-linear-gradient(
+    112deg,
+    transparent 0 9%,
+    #ffffff55 11%,
+    transparent 15% 27%
+  );
+  animation: aquarium-light 9s ease-in-out infinite alternate;
+}
+.aquarium-sand {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 38px;
+  background:
+    radial-gradient(circle at 12px 7px, #9d743a 0 2px, transparent 2.5px),
+    radial-gradient(circle at 32px 20px, #c49a57 0 2px, transparent 2.5px),
+    linear-gradient(#e5c47f, #c99c55);
+  background-size: 42px 28px, 53px 31px, 100% 100%;
+  box-shadow: 0 -5px 12px #8b652c33;
+}
+.aquarium-fish {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  aspect-ratio: 1.72;
+  will-change: transform;
+  filter: drop-shadow(0 5px 5px #164f5b55);
+}
+.aquarium-fish img {
+  object-fit: contain;
+}
+.aquarium-fish > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+}
+.aquarium-empty {
+  position: absolute;
+  z-index: 3;
+  top: 45%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  color: #245b65;
+  font-weight: 850;
+  text-align: center;
+}
+.aquarium-editor {
+  display: grid;
+  gap: 1.5rem;
+}
+.aquarium-catch-selector {
+  padding: 1.25rem;
+}
+.aquarium-catch-selector h2 {
+  margin-top: 0;
+}
+.aquarium-catch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.aquarium-catch-option {
+  display: grid;
+  grid-template-columns: auto 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 2px solid #d9e3dc;
+  border-radius: 13px;
+  background: #fffef9;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+}
+.aquarium-catch-option:hover {
+  transform: translateY(-2px);
+  border-color: #91bca0;
+}
+.aquarium-catch-option.selected {
+  border-color: var(--leaf);
+  background: #eef8ee;
+}
+.aquarium-catch-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--leaf);
+}
+.aquarium-catch-option > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.aquarium-catch-option b,
+.aquarium-catch-option small {
+  overflow-wrap: anywhere;
+}
+.aquarium-catch-option small {
+  color: #52705b;
+}
+.aquarium-option-image {
+  position: relative;
+  display: grid;
+  width: 72px;
+  height: 54px;
+  place-items: center;
+}
+.aquarium-option-image img {
+  object-fit: contain;
+}
+@keyframes aquarium-light {
+  from { transform: translateX(-4%); }
+  to { transform: translateX(5%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aquarium-water-light {
+    animation: none;
+  }
+}
 @media (max-width: 600px) {
   .profile-rank-card {
     width: 100%;
@@ -293,6 +466,24 @@ h2 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+  }
+  .profile-aquarium-heading,
+  .aquarium-editor-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .profile-aquarium-heading .button,
+  .aquarium-editor-heading .button {
+    width: 100%;
+  }
+  .virtual-aquarium,
+  .virtual-aquarium-compact {
+    height: 310px;
+    border-width: 6px;
+    border-radius: 14px;
+  }
+  .aquarium-catch-grid {
+    grid-template-columns: 1fr;
   }
 }
 .stats-section {

@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/date";
 import { requireUser } from "@/lib/auth";
 import {
   changePasswordAction,
@@ -28,6 +27,7 @@ import {
   scoringContext,
 } from "@/lib/ranking";
 import { RankMedal } from "@/components/rank-medal";
+import { VirtualAquarium } from "@/components/virtual-aquarium";
 
 export default async function FisherProfile({
   params,
@@ -40,6 +40,7 @@ export default async function FisherProfile({
     changed?: string;
     avatar?: string;
     lure?: string;
+    aquarium?: string;
   }>;
 }) {
   const actor = await requireUser();
@@ -56,6 +57,10 @@ export default async function FisherProfile({
           photos: { where: { isPrimary: true }, take: 1 },
         },
         orderBy: { caughtAt: "desc" },
+      },
+      aquariumFish: {
+        include: { catch: { include: { species: true } } },
+        orderBy: { createdAt: "asc" },
       },
     },
   });
@@ -384,26 +389,32 @@ export default async function FisherProfile({
           )}
         </article>
       </div>
-      <h2>Últimos recuerdos</h2>
-      {fisher.catches.slice(0, 5).map((item) => (
-        <Link
-          className="card"
-          style={{ display: "block", padding: "1rem", marginBottom: 8 }}
-          href={`/capturas/${item.id}`}
-          key={item.id}
-        >
-          <b>{item.species.commonName}</b> · {item.place.name} ·{" "}
-          {formatDate(item.caughtAt)}
-        </Link>
-      ))}
-      {fisher.catches.length > 5 && (
-        <Link
-          className="button secondary"
-          href={`/capturas?fisher=${fisher.id}`}
-        >
-          Ver todos sus recuerdos
-        </Link>
-      )}
+      <section className="profile-aquarium-section">
+        <div className="profile-aquarium-heading">
+          <div>
+            <h2>Mi pecera virtual</h2>
+            <p>Los peces conservan la escala de tus capturas.</p>
+          </div>
+          {actor.id === fisher.id && (
+            <Link className="button secondary" href={`/pescadores/${id}/pecera`}>
+              Editar pecera
+            </Link>
+          )}
+        </div>
+        {status.aquarium === "saved" && (
+          <p role="status" className="aquarium-saved">✓ Pecera guardada.</p>
+        )}
+        <VirtualAquarium
+          fish={fisher.aquariumFish
+            .filter((entry) => !entry.catch.deletedAt)
+            .map((entry) => ({
+              id: entry.catch.id,
+              name: entry.catch.species.commonName,
+              lengthCm: Number(entry.catch.lengthCm),
+              catalogImageId: entry.catch.species.catalogImageId,
+            }))}
+        />
+      </section>
     </>
   );
 }
