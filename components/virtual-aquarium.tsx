@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DecorationSprite } from "@/components/decoration-sprite";
 import type { DecorationLayerAction } from "@/lib/aquarium-layers";
+import { decorationBySlug } from "@/lib/decorations";
 
 export type AquariumBehavior = "FREE_SWIMMER" | "BOTTOM_DWELLER" | "CEPHALOPOD";
 
@@ -373,7 +374,7 @@ export function VirtualAquarium({
       <div className="aquarium-water-light" aria-hidden="true" />
       {decorations.map((item) => (
         <span
-          className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")} decoration-${item.slug}${editableDecorations ? " editable" : ""}`}
+          className={`aquarium-decoration rarity-decoration-${item.rarity.toLowerCase().replace("_", "-")} decoration-${item.slug}${editableDecorations ? " editable" : ""}${pendingDecorationId === item.id ? " selected" : ""}`}
           key={item.id}
           style={{
             left: `${decorationPreview?.id === item.id ? decorationPreview.xPct : item.xPct}%`,
@@ -578,7 +579,10 @@ export function VirtualAquarium({
           >
             ×
           </button>
-          <b>Decoración seleccionada</b>
+          <b>
+            {decorationBySlug.get(activeDecoration.slug)?.name ??
+              "Decoración seleccionada"}
+          </b>
           <div className="aquarium-layer-controls">
             <button
               type="button"

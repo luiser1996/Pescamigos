@@ -560,6 +560,13 @@ h2 {
 .aquarium-decoration.editable:active {
   cursor: grabbing;
 }
+.aquarium-decoration.selected {
+  outline: 2px solid #fff;
+  outline-offset: 5px;
+  border-radius: 10px;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff)
+    drop-shadow(0 5px 5px #164f5b55);
+}
 .aquarium-decoration-details {
   display: grid;
   grid-template-columns: 1fr;
