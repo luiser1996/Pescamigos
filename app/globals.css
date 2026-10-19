@@ -630,6 +630,12 @@ h2 {
   background: #c8e7cb;
   transform: translateY(-1px);
 }
+.chest-header-link.no-chests {
+  color: #87918d;
+}
+.chest-header-link.no-chests:hover {
+  background: #d4dcda;
+}
 .chest-page,
 .craft-page {
   display: grid;
@@ -695,10 +701,13 @@ h2 {
   width: max-content;
   gap: 10px;
   padding: 15px;
-  transform: translateX(0);
+  transform: translateX(var(--chest-start-x, 0));
 }
 .chest-strip.rolling {
   animation: chest-roll 9s cubic-bezier(0.08, 0.58, 0.12, 1) forwards;
+}
+.chest-strip.settled {
+  transform: translateX(var(--chest-end-x, -2740px));
 }
 .chest-strip-item {
   display: grid;
@@ -790,11 +799,62 @@ h2 {
 }
 @keyframes chest-roll {
   0% {
-    transform: translateX(0);
+    transform: translateX(var(--chest-start-x, 0));
   }
   100% {
-    transform: translateX(-2740px);
+    transform: translateX(var(--chest-end-x, -2740px));
   }
+}
+.forge-simulator-controls {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.segmented-control {
+  display: inline-flex;
+  padding: 4px;
+  border: 1px solid #b8d2c4;
+  border-radius: 12px;
+  background: #edf6ef;
+}
+.segmented-control button {
+  min-height: 38px;
+  padding: 0.45rem 0.75rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 750;
+}
+.segmented-control button.active {
+  background: var(--leaf);
+  color: white;
+}
+.forge-simulator-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.forge-simulator-item {
+  display: grid;
+  width: 125px;
+  min-height: 145px;
+  padding: 10px;
+  border-radius: 13px;
+  place-items: center;
+  text-align: center;
+}
+.forge-simulator-item .decoration-sprite {
+  width: 92px;
+}
+.forge-simulator-arrow {
+  color: var(--leaf);
+  font-size: 2rem;
+  font-weight: 900;
 }
 .aquarium-catch-selector .filter-panel {
   margin-block: 0.5rem 0.75rem;

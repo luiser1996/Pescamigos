@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import {
+  type CSSProperties,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { openChestAction } from "@/app/actions/decorations";
 import { DecorationSprite } from "@/components/decoration-sprite";
 import {
@@ -23,18 +29,21 @@ export function ChestOpener({
   const [revealedNonce, setRevealedNonce] = useState<string>();
   const strip = useMemo(() => {
     if (!state.slug || !state.nonce) return [];
+    const previousSlug = state.previousSlug;
+    const targetIndex = previousSlug ? 39 : 19;
     let value =
       [...state.nonce].reduce(
         (sum, character) => Math.imul(sum ^ character.charCodeAt(0), 16777619),
         2166136261,
       ) >>> 0;
-    const result = Array.from({ length: 23 }, () => {
+    const result = Array.from({ length: previousSlug ? 43 : 23 }, () => {
       value = (Math.imul(value, 1664525) + 1013904223) >>> 0;
       return decorations[value % decorations.length].slug;
     });
-    result[19] = state.slug;
+    if (previousSlug) result[19] = previousSlug;
+    result[targetIndex] = state.slug;
     return result;
-  }, [state.slug, state.nonce]);
+  }, [state.slug, state.nonce, state.previousSlug]);
   useEffect(() => {
     if (!state.slug || !state.nonce) return;
     const nonce = state.nonce;
@@ -44,6 +53,11 @@ export function ChestOpener({
   const rolling = Boolean(state.nonce && revealedNonce !== state.nonce);
   const won =
     state.slug && !rolling ? decorationBySlug.get(state.slug) : undefined;
+  const continuesFromPrevious = Boolean(state.previousSlug);
+  const stripStyle = {
+    "--chest-start-x": continuesFromPrevious ? "-2740px" : "0px",
+    "--chest-end-x": continuesFromPrevious ? "-5540px" : "-2740px",
+  } as CSSProperties;
   return (
     <div className="chest-page">
       <section className="card chest-summary">
@@ -74,8 +88,9 @@ export function ChestOpener({
           <span className="chest-pointer" aria-hidden="true" />
           {strip.length ? (
             <div
-              className={`chest-strip${rolling ? " rolling" : ""}`}
+              className={`chest-strip ${rolling ? "rolling" : "settled"}`}
               key={state.nonce}
+              style={stripStyle}
             >
               {strip.map((slug, index) => {
                 const item = decorationBySlug.get(slug)!;

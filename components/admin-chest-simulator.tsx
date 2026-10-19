@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { DecorationSprite } from "@/components/decoration-sprite";
 import {
   decorationBySlug,
@@ -20,6 +20,9 @@ export function AdminChestSimulator() {
   const [strip, setStrip] = useState<string[]>([]);
   const [rolling, setRolling] = useState(false);
   const [reward, setReward] = useState<string>();
+  const [run, setRun] = useState(0);
+  const [continuesFromPrevious, setContinuesFromPrevious] = useState(false);
+  const settledSlug = useRef<string | undefined>(undefined);
   const timer = useRef<ReturnType<typeof setTimeout>>(null);
   useEffect(
     () => () => {
@@ -39,20 +42,30 @@ export function AdminChestSimulator() {
             : "LEGENDARY";
     const pool = decorations.filter((item) => item.rarity === rarity);
     const winner = pool[randomNumber(pool.length)].slug;
+    const previousSlug = settledSlug.current;
+    const targetIndex = previousSlug ? 39 : 19;
     const next = Array.from(
-      { length: 23 },
+      { length: previousSlug ? 43 : 23 },
       () => decorations[randomNumber(decorations.length)].slug,
     );
-    next[19] = winner;
+    if (previousSlug) next[19] = previousSlug;
+    next[targetIndex] = winner;
     setStrip(next);
+    setContinuesFromPrevious(Boolean(previousSlug));
+    setRun((value) => value + 1);
     setReward(undefined);
     setRolling(true);
     timer.current = setTimeout(() => {
+      settledSlug.current = winner;
       setRolling(false);
       setReward(winner);
     }, 9200);
   };
   const won = reward ? decorationBySlug.get(reward) : undefined;
+  const stripStyle = {
+    "--chest-start-x": continuesFromPrevious ? "-2740px" : "0px",
+    "--chest-end-x": continuesFromPrevious ? "-5540px" : "-2740px",
+  } as CSSProperties;
   return (
     <div className="chest-page">
       <section className="card chest-summary">
@@ -80,8 +93,9 @@ export function AdminChestSimulator() {
           <span className="chest-pointer" aria-hidden="true" />
           {strip.length ? (
             <div
-              className={`chest-strip${rolling ? " rolling" : ""}`}
-              key={strip.join("-")}
+              className={`chest-strip ${rolling ? "rolling" : "settled"}`}
+              key={run}
+              style={stripStyle}
             >
               {strip.map((slug, index) => {
                 const item = decorationBySlug.get(slug)!;

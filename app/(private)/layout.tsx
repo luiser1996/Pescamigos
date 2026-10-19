@@ -6,6 +6,7 @@ import { BackButton } from "@/components/back-button";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { BottomNav } from "@/components/bottom-nav";
 import { Gift } from "lucide-react";
+import { availableChests } from "@/lib/chests";
 
 export default async function PrivateLayout({
   children,
@@ -13,6 +14,7 @@ export default async function PrivateLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  const chestCount = await availableChests(user.id);
   return (
     <>
       <header
@@ -42,9 +44,13 @@ export default async function PrivateLayout({
           </Link>
           <Link
             href="/cofres"
-            className="chest-header-link"
-            aria-label="Abrir cofres"
-            title="Cofres"
+            className={`chest-header-link${chestCount < 1 ? " no-chests" : ""}`}
+            aria-label={
+              chestCount > 0
+                ? `Abrir cofres: ${chestCount} disponibles`
+                : "Cofres: ninguno disponible"
+            }
+            title={chestCount > 0 ? `Cofres (${chestCount})` : "Sin cofres"}
           >
             <Gift aria-hidden="true" />
           </Link>

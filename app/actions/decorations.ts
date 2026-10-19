@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 export type ChestState = {
   available: number;
   slug?: string;
+  previousSlug?: string;
   nonce?: string;
   error?: string;
 };
@@ -35,7 +36,6 @@ export async function openChestAction(
   _state: ChestState,
   _data: FormData,
 ): Promise<ChestState> {
-  void _state;
   void _data;
   const user = await requireUser();
   if ((await availableChests(user.id)) < 1)
@@ -65,7 +65,12 @@ export async function openChestAction(
   const remaining = await availableChests(user.id);
   revalidatePath("/cofres");
   revalidatePath(`/pescadores/${user.username}/pecera`);
-  return { available: remaining, slug: item.slug, nonce: crypto.randomUUID() };
+  return {
+    available: remaining,
+    slug: item.slug,
+    previousSlug: _state.slug,
+    nonce: crypto.randomUUID(),
+  };
 }
 
 export async function craftDecorationsAction(data: FormData) {

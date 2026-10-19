@@ -156,7 +156,7 @@ export function VirtualAquarium({
         const waterMaxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
         const maxY =
           item.behavior === "BOTTOM_DWELLER"
-            ? Math.max(0, bounds.height - height - 5)
+            ? Math.max(0, bounds.height - height - SAND_HEIGHT * 0.5 - 5)
             : waterMaxY;
         const previous = motions.get(item.id);
         motions.set(item.id, {
@@ -220,7 +220,7 @@ export function VirtualAquarium({
         const waterMaxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
         const maxY =
           motion.behavior === "BOTTOM_DWELLER"
-            ? Math.max(0, bounds.height - height - 5)
+            ? Math.max(0, bounds.height - height - SAND_HEIGHT * 0.5 - 5)
             : waterMaxY;
         const minY =
           motion.behavior === "BOTTOM_DWELLER" ? Math.max(0, maxY - 28) : 0;
