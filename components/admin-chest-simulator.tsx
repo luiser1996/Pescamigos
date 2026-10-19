@@ -50,7 +50,7 @@ export function AdminChestSimulator() {
     timer.current = setTimeout(() => {
       setRolling(false);
       setReward(winner);
-    }, 4600);
+    }, 9200);
   };
   const won = reward ? decorationBySlug.get(reward) : undefined;
   return (

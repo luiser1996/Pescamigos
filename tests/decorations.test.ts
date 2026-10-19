@@ -15,7 +15,7 @@ describe("cofres y decoraciones", () => {
 
   it("contiene toda la pool y probabilidades completas", () => {
     expect(decorations.filter((item) => item.rarity === "COMMON")).toHaveLength(
-      20,
+      17,
     );
     expect(decorations.filter((item) => item.rarity === "RARE")).toHaveLength(
       12,

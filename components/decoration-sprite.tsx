@@ -20,6 +20,7 @@ export function DecorationSprite({
         backgroundImage: `url(${item.atlas})`,
         backgroundSize: `${item.columns * 100}% ${item.rows * 100}%`,
         backgroundPosition: `${item.columns === 1 ? 0 : (column / (item.columns - 1)) * 100}% ${item.rows === 1 ? 0 : (row / (item.rows - 1)) * 100}%`,
+        aspectRatio: item.aspectRatio,
       }}
     />
   );

@@ -689,6 +689,8 @@ h2 {
   box-shadow: 0 0 10px #fff;
 }
 .chest-strip {
+  position: relative;
+  left: 50%;
   display: flex;
   width: max-content;
   gap: 10px;
@@ -696,7 +698,7 @@ h2 {
   transform: translateX(0);
 }
 .chest-strip.rolling {
-  animation: chest-roll 4.5s cubic-bezier(0.08, 0.58, 0.12, 1) forwards;
+  animation: chest-roll 9s cubic-bezier(0.08, 0.58, 0.12, 1) forwards;
 }
 .chest-strip-item {
   display: grid;
@@ -791,7 +793,7 @@ h2 {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(-2660px + 50vw));
+    transform: translateX(-2740px);
   }
 }
 .aquarium-catch-selector .filter-panel {

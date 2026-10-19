@@ -153,7 +153,11 @@ export function VirtualAquarium({
         const width = Math.min(fishWidth(item.lengthCm), bounds.width * 0.38);
         const height = width * 0.58;
         const value = seed(item.id);
-        const maxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
+        const waterMaxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
+        const maxY =
+          item.behavior === "BOTTOM_DWELLER"
+            ? Math.max(0, bounds.height - height - 5)
+            : waterMaxY;
         const previous = motions.get(item.id);
         motions.set(item.id, {
           x:
@@ -213,9 +217,13 @@ export function VirtualAquarium({
         }
         const height = motion.width * 0.58;
         const maxX = Math.max(0, bounds.width - motion.width);
-        const maxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
+        const waterMaxY = Math.max(0, bounds.height - SAND_HEIGHT - height - 5);
+        const maxY =
+          motion.behavior === "BOTTOM_DWELLER"
+            ? Math.max(0, bounds.height - height - 5)
+            : waterMaxY;
         const minY =
-          motion.behavior === "BOTTOM_DWELLER" ? Math.max(0, maxY - 16) : 0;
+          motion.behavior === "BOTTOM_DWELLER" ? Math.max(0, maxY - 28) : 0;
         motion.x += motion.vx * delta;
         motion.y += motion.vy * delta;
         if (motion.x <= 0 || motion.x >= maxX) {

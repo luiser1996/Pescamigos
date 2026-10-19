@@ -38,7 +38,7 @@ export function ChestOpener({
   useEffect(() => {
     if (!state.slug || !state.nonce) return;
     const nonce = state.nonce;
-    const timer = setTimeout(() => setRevealedNonce(nonce), 4600);
+    const timer = setTimeout(() => setRevealedNonce(nonce), 9200);
     return () => clearTimeout(timer);
   }, [state.slug, state.nonce]);
   const rolling = Boolean(state.nonce && revealedNonce !== state.nonce);
@@ -61,7 +61,7 @@ export function ChestOpener({
       <section className="rarity-odds" aria-label="Probabilidades">
         {rarityOrder.map((rarity) => (
           <div
-            className={`rarity-odds-item rarity-${rarity.toLowerCase().replace("_", "-")}`}
+            className={`rarity-odds-item rarity-bg-${rarity.toLowerCase().replace("_", "-")}`}
             key={rarity}
           >
             <b>{decorationRarityLabels[rarity]}</b>
