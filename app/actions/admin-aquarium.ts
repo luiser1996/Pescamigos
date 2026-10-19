@@ -35,21 +35,30 @@ export async function saveAdminAquariumAction(data: FormData) {
       "/admin/pecera?error=Algún+pez+no+es+válido",
       RedirectType.replace,
     );
-  const decorations = Array.isArray(rawDecorations)
-    ? rawDecorations.slice(0, 120).flatMap((item) => {
-        const definition = decorationBySlug.get(String(item.slug ?? ""));
-        if (!definition) return [];
-        return [
-          {
-            slug: definition.slug,
-            rarity: definition.rarity,
-            xPct: Math.max(1, Math.min(99, Number(item.xPct) || 50)),
-            yPct: Math.max(1, Math.min(97, Number(item.yPct) || 70)),
-            scale: Math.max(0.5, Math.min(2, Number(item.scale) || 1)),
-          },
-        ];
-      })
-    : [];
+  const decorations = (
+    Array.isArray(rawDecorations)
+      ? rawDecorations.slice(0, 120).flatMap((item) => {
+          const definition = decorationBySlug.get(String(item.slug ?? ""));
+          if (!definition) return [];
+          return [
+            {
+              slug: definition.slug,
+              rarity: definition.rarity,
+              xPct: Math.max(1, Math.min(99, Number(item.xPct) || 50)),
+              yPct: Math.max(1, Math.min(97, Number(item.yPct) || 70)),
+              scale: Math.max(0.5, Math.min(2, Number(item.scale) || 1)),
+              layer: Math.max(
+                -1000,
+                Math.min(1000, Math.trunc(Number(item.layer) || 0)),
+              ),
+              coversFish: item.coversFish === true,
+            },
+          ];
+        })
+      : []
+  )
+    .sort((a, b) => a.layer - b.layer || a.slug.localeCompare(b.slug))
+    .map((item, layer) => ({ ...item, layer }));
   await prisma.$transaction([
     prisma.adminAquariumFish.deleteMany(),
     prisma.adminAquariumDecoration.deleteMany(),

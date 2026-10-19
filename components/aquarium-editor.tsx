@@ -10,6 +10,7 @@ import {
   type PlacedDecoration,
   VirtualAquarium,
 } from "@/components/virtual-aquarium";
+import { reorderDecorations } from "@/lib/aquarium-layers";
 import { DecorationSprite } from "@/components/decoration-sprite";
 import {
   decorationBySlug,
@@ -95,11 +96,13 @@ export function AquariumEditor({
         type="hidden"
         name="decorationPlacements"
         value={JSON.stringify(
-          placed.map(({ id, xPct, yPct, scale }) => ({
+          placed.map(({ id, xPct, yPct, scale, layer, coversFish }) => ({
             id,
             xPct,
             yPct,
             scale,
+            layer,
+            coversFish,
           })),
         )}
       />
@@ -119,13 +122,32 @@ export function AquariumEditor({
           decorations={placed}
           compact
           editableDecorations
+          onRemoveFish={(id) =>
+            setSelected((current) => {
+              const next = new Set(current);
+              next.delete(id);
+              return next;
+            })
+          }
           pendingDecorationId={activeDecorationId}
           onPlaceDecoration={(id, xPct, yPct) => {
             setPlaced((current) => {
               const source = decorations.find((item) => item.id === id);
               if (!source) return current;
               const without = current.filter((item) => item.id !== id);
-              return [...without, { ...source, xPct, yPct }];
+              const existing = current.find((item) => item.id === id);
+              return [
+                ...without,
+                {
+                  ...source,
+                  xPct,
+                  yPct,
+                  layer:
+                    existing?.layer ??
+                    Math.max(-1, ...current.map((item) => item.layer)) + 1,
+                  coversFish: existing?.coversFish ?? false,
+                },
+              ];
             });
             setActiveDecorationId(null);
           }}
@@ -133,6 +155,18 @@ export function AquariumEditor({
             setPlaced((current) => current.filter((item) => item.id !== id))
           }
           onSelectDecoration={setActiveDecorationId}
+          onChangeDecorationLayer={(id, action) =>
+            setPlaced((current) => reorderDecorations(current, id, action))
+          }
+          onToggleDecorationCoversFish={(id) =>
+            setPlaced((current) =>
+              current.map((item) =>
+                item.id === id
+                  ? { ...item, coversFish: !item.coversFish }
+                  : item,
+              ),
+            )
+          }
         />
       </section>
       <section className="card aquarium-decoration-selector">

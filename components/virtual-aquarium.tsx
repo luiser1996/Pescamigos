@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DecorationSprite } from "@/components/decoration-sprite";
+import type { DecorationLayerAction } from "@/lib/aquarium-layers";
 
 export type AquariumBehavior = "FREE_SWIMMER" | "BOTTOM_DWELLER" | "CEPHALOPOD";
 
@@ -26,6 +27,8 @@ export type PlacedDecoration = {
   xPct: number;
   yPct: number;
   scale: number;
+  layer: number;
+  coversFish: boolean;
   acquiredAtValue?: number;
   isPlaced?: boolean;
 };
@@ -68,6 +71,9 @@ export function VirtualAquarium({
   onPlaceDecoration,
   onRemoveDecoration,
   onSelectDecoration,
+  onChangeDecorationLayer,
+  onToggleDecorationCoversFish,
+  onRemoveFish,
   pendingDecorationId,
 }: {
   fish: AquariumFish[];
@@ -76,7 +82,10 @@ export function VirtualAquarium({
   editableDecorations?: boolean;
   onPlaceDecoration?: (id: string, xPct: number, yPct: number) => void;
   onRemoveDecoration?: (id: string) => void;
-  onSelectDecoration?: (id: string) => void;
+  onSelectDecoration?: (id: string | null) => void;
+  onChangeDecorationLayer?: (id: string, action: DecorationLayerAction) => void;
+  onToggleDecorationCoversFish?: (id: string) => void;
+  onRemoveFish?: (id: string) => void;
   pendingDecorationId?: string | null;
 }) {
   const tankRef = useRef<HTMLDivElement>(null);
@@ -92,6 +101,9 @@ export function VirtualAquarium({
   const [spriteScales, setSpriteScales] = useState<Record<string, number>>({});
   const [sparkling, setSparkling] = useState<Set<string>>(() => new Set());
   const activeFish = fish.find((item) => item.id === activeId);
+  const activeDecoration = decorations.find(
+    (item) => item.id === pendingDecorationId,
+  );
 
   const decorationPosition = (clientX: number, clientY: number) => {
     const tank = tankRef.current;
@@ -367,19 +379,7 @@ export function VirtualAquarium({
             left: `${decorationPreview?.id === item.id ? decorationPreview.xPct : item.xPct}%`,
             top: `${decorationPreview?.id === item.id ? decorationPreview.yPct : item.yPct}%`,
             transform: `translate(-50%, -50%) scale(${item.scale})`,
-            zIndex: Math.max(
-              1,
-              Math.round(
-                40 -
-                  ({
-                    COMMON: 7,
-                    RARE: 10,
-                    VERY_RARE: 18,
-                    LEGENDARY: 25,
-                  }[item.rarity] ?? 7) *
-                    item.scale,
-              ),
-            ),
+            zIndex: (item.coversFish ? 700 : 100) + item.layer,
           }}
           onClick={(event) => {
             if (decorationDragMoved.current) {
@@ -391,8 +391,10 @@ export function VirtualAquarium({
             if (
               editableDecorations &&
               !(event.target as HTMLElement).closest("button")
-            )
+            ) {
+              setActiveId(null);
               onSelectDecoration?.(item.id);
+            }
           }}
           onPointerDown={(event) => {
             if (
@@ -416,6 +418,7 @@ export function VirtualAquarium({
             };
             decorationDragMoved.current = false;
             event.currentTarget.setPointerCapture(event.pointerId);
+            setActiveId(null);
             onSelectDecoration?.(item.id);
           }}
           onPointerMove={(event) => {
@@ -452,15 +455,6 @@ export function VirtualAquarium({
           title={editableDecorations ? "Seleccionar para recolocar" : undefined}
         >
           <DecorationSprite slug={item.slug} />
-          {editableDecorations && (
-            <button
-              type="button"
-              aria-label="Quitar decoración"
-              onClick={() => onRemoveDecoration?.(item.id)}
-            >
-              ×
-            </button>
-          )}
         </span>
       ))}
       {fish.length === 0 && (
@@ -477,7 +471,10 @@ export function VirtualAquarium({
           key={item.id}
           title={`${item.name} · ${item.lengthCm} cm`}
           aria-pressed={activeId === item.id}
-          onClick={() => setActiveId(activeId === item.id ? null : item.id)}
+          onClick={() => {
+            onSelectDecoration?.(null);
+            setActiveId(activeId === item.id ? null : item.id);
+          }}
         >
           {item.catalogImageId ? (
             <span
@@ -522,20 +519,36 @@ export function VirtualAquarium({
           >
             ×
           </button>
-          <div className="aquarium-details-copy">
-            <b>{activeFish.name}</b>
-            <span>{activeFish.lengthCm} cm</span>
-            {activeFish.caughtAt && <span>{activeFish.caughtAt}</span>}
-            {activeFish.placeName && <span>{activeFish.placeName}</span>}
-            {activeFish.detailHref !== null && (
-              <Link
-                href={activeFish.detailHref ?? `/capturas/${activeFish.id}`}
+          {onRemoveFish ? (
+            <div className="aquarium-details-copy aquarium-edit-selection">
+              <b>Pez seleccionado</b>
+              <button
+                type="button"
+                className="button danger"
+                onClick={() => {
+                  onRemoveFish(activeFish.id);
+                  setActiveId(null);
+                }}
               >
-                Ver recuerdo
-              </Link>
-            )}
-          </div>
-          {activeFish.catalogImageId && (
+                Quitar de la pecera
+              </button>
+            </div>
+          ) : (
+            <div className="aquarium-details-copy">
+              <b>{activeFish.name}</b>
+              <span>{activeFish.lengthCm} cm</span>
+              {activeFish.caughtAt && <span>{activeFish.caughtAt}</span>}
+              {activeFish.placeName && <span>{activeFish.placeName}</span>}
+              {activeFish.detailHref !== null && (
+                <Link
+                  href={activeFish.detailHref ?? `/capturas/${activeFish.id}`}
+                >
+                  Ver recuerdo
+                </Link>
+              )}
+            </div>
+          )}
+          {!onRemoveFish && activeFish.catalogImageId && (
             <span className="aquarium-details-image">
               <Image
                 unoptimized
@@ -553,6 +566,70 @@ export function VirtualAquarium({
               />
             </span>
           )}
+        </aside>
+      )}
+      {editableDecorations && activeDecoration && (
+        <aside className="aquarium-fish-details aquarium-decoration-details">
+          <button
+            type="button"
+            className="aquarium-details-close"
+            onClick={() => onSelectDecoration?.(null)}
+            aria-label="Cerrar controles"
+          >
+            ×
+          </button>
+          <b>Decoración seleccionada</b>
+          <div className="aquarium-layer-controls">
+            <button
+              type="button"
+              onClick={() =>
+                onChangeDecorationLayer?.(activeDecoration.id, "back")
+              }
+            >
+              Mandar al fondo
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChangeDecorationLayer?.(activeDecoration.id, "lower")
+              }
+            >
+              Bajar una capa
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChangeDecorationLayer?.(activeDecoration.id, "raise")
+              }
+            >
+              Subir una capa
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChangeDecorationLayer?.(activeDecoration.id, "front")
+              }
+            >
+              Mandar al frente
+            </button>
+          </div>
+          <label className="aquarium-cover-fish-toggle">
+            <input
+              type="checkbox"
+              checked={activeDecoration.coversFish}
+              onChange={() =>
+                onToggleDecorationCoversFish?.(activeDecoration.id)
+              }
+            />
+            Cubrir a los peces
+          </label>
+          <button
+            type="button"
+            className="button danger"
+            onClick={() => onRemoveDecoration?.(activeDecoration.id)}
+          >
+            Quitar de la pecera
+          </button>
         </aside>
       )}
       <div className="aquarium-sand" aria-hidden="true" />

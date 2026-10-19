@@ -444,6 +444,8 @@ export default async function FisherProfile({
             xPct: item.xPct!,
             yPct: item.yPct!,
             scale: item.scale,
+            layer: item.layer,
+            coversFish: item.coversFish,
           }))}
           fish={fisher.aquariumFish
             .filter((entry) => !entry.catch.deletedAt)

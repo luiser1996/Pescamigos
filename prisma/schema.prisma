@@ -59,25 +59,25 @@ enum CatchDisposition {
 }
 
 model User {
-  id                  String         @id @default(cuid())
-  username            String         @unique
+  id                  String           @id @default(cuid())
+  username            String           @unique
   displayName         String
   passwordHash        String
-  role                Role           @default(MEMBER)
-  active              Boolean        @default(true)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  role                Role             @default(MEMBER)
+  active              Boolean          @default(true)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
   sessions            Session[]
-  catches             Catch[]        @relation("FisherCatches")
-  createdCatches      Catch[]        @relation("CreatedCatches")
+  catches             Catch[]          @relation("FisherCatches")
+  createdCatches      Catch[]          @relation("CreatedCatches")
   places              FishingPlace[]
-  avatarImageId       String?        @unique
-  avatarImage         StoredImage?   @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
-  lostLures           Int            @default(0)
-  favoriteLureImageId String?        @unique
+  avatarImageId       String?          @unique
+  avatarImage         StoredImage?     @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
+  lostLures           Int              @default(0)
+  favoriteLureImageId String?          @unique
   favoriteLureName    String?
   nickname            String?
-  favoriteLureImage   StoredImage?   @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
+  favoriteLureImage   StoredImage?     @relation("UserFavoriteLure", fields: [favoriteLureImageId], references: [id], onDelete: SetNull)
   aquariumFish        AquariumFish[]
   decorations         UserDecoration[]
 }
@@ -107,27 +107,27 @@ model LoginThrottle {
 }
 
 model Species {
-  id                    String             @id @default(cuid())
-  slug                  String             @unique
+  id                    String              @id @default(cuid())
+  slug                  String              @unique
   commonName            String
   scientificName        String
-  alternateNames        String[]           @default([])
+  alternateNames        String[]            @default([])
   waterType             WaterType
   description           String?
   curiosities           String?
   habitat               String?
   granadaDistribution   String?
-  usualSizeCm           Decimal?           @db.Decimal(7, 2)
-  documentedMaxSizeCm   Decimal?           @db.Decimal(7, 2)
-  usualWeightG          Decimal?           @db.Decimal(10, 2)
-  activeMonths          Int[]              @default([])
-  activityTimes         String[]           @default([])
+  usualSizeCm           Decimal?            @db.Decimal(7, 2)
+  documentedMaxSizeCm   Decimal?            @db.Decimal(7, 2)
+  usualWeightG          Decimal?            @db.Decimal(10, 2)
+  activeMonths          Int[]               @default([])
+  activityTimes         String[]            @default([])
   usualDepth            String?
   difficulty            Int?
-  rarity                Rarity             @default(COMMON)
-  aquariumBehavior      AquariumBehavior   @default(FREE_SWIMMER)
-  techniques            String[]           @default([])
-  baits                 String[]           @default([])
+  rarity                Rarity              @default(COMMON)
+  aquariumBehavior      AquariumBehavior    @default(FREE_SWIMMER)
+  techniques            String[]            @default([])
+  baits                 String[]            @default([])
   conservationStatus    String?
   legalStatus           String?
   closedSeasonNotes     String?
@@ -135,17 +135,17 @@ model Species {
   biologicalSeasonNotes String?
   illustrationPath      String?
   silhouettePath        String?
-  verificationStatus    VerificationStatus @default(PENDING)
+  verificationStatus    VerificationStatus  @default(PENDING)
   reviewedAt            DateTime?
   archivedAt            DateTime?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
   sources               SpeciesSource[]
   catches               Catch[]
-  catalogImageId        String?            @unique
-  detailImageId         String?            @unique
-  catalogImage          StoredImage?       @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
-  detailImage           StoredImage?       @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
+  catalogImageId        String?             @unique
+  detailImageId         String?             @unique
+  catalogImage          StoredImage?        @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
+  detailImage           StoredImage?        @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
   adminAquariumFish     AdminAquariumFish[]
 
   @@index([waterType, archivedAt])
@@ -247,6 +247,8 @@ model UserDecoration {
   xPct       Float?
   yPct       Float?
   scale      Float            @default(1)
+  layer      Int              @default(0)
+  coversFish Boolean          @default(false)
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, acquiredAt])
@@ -264,13 +266,15 @@ model AdminAquariumFish {
 }
 
 model AdminAquariumDecoration {
-  id        String   @id @default(cuid())
-  slug      String
-  rarity    Rarity
-  xPct      Float
-  yPct      Float
-  scale     Float    @default(1)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  slug       String
+  rarity     Rarity
+  xPct       Float
+  yPct       Float
+  scale      Float    @default(1)
+  layer      Int      @default(0)
+  coversFish Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@index([createdAt])
 }

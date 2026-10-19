@@ -11,6 +11,7 @@ import {
   VirtualAquarium,
 } from "@/components/virtual-aquarium";
 import { decorations, decorationRarityLabels } from "@/lib/decorations";
+import { reorderDecorations } from "@/lib/aquarium-layers";
 
 type SpeciesOption = {
   id: string;
@@ -60,7 +61,16 @@ export function AdminAquariumEditor({
     const id = crypto.randomUUID();
     setPlaced((current) => [
       ...current,
-      { id, slug, rarity, xPct: 50, yPct: 70, scale: 1 },
+      {
+        id,
+        slug,
+        rarity,
+        xPct: 50,
+        yPct: 70,
+        scale: 1,
+        layer: Math.max(-1, ...current.map((item) => item.layer)) + 1,
+        coversFish: false,
+      },
     ]);
     setActiveDecorationId(id);
   };
@@ -83,11 +93,13 @@ export function AdminAquariumEditor({
         type="hidden"
         name="decorations"
         value={JSON.stringify(
-          placed.map(({ slug, xPct, yPct, scale }) => ({
+          placed.map(({ slug, xPct, yPct, scale, layer, coversFish }) => ({
             slug,
             xPct,
             yPct,
             scale,
+            layer,
+            coversFish,
           })),
         )}
       />
@@ -105,6 +117,9 @@ export function AdminAquariumEditor({
         fish={fish}
         decorations={placed}
         editableDecorations
+        onRemoveFish={(id) =>
+          setFish((current) => current.filter((item) => item.id !== id))
+        }
         pendingDecorationId={activeDecorationId}
         onPlaceDecoration={(id, xPct, yPct) => {
           setPlaced((current) =>
@@ -118,6 +133,16 @@ export function AdminAquariumEditor({
           setPlaced((current) => current.filter((item) => item.id !== id))
         }
         onSelectDecoration={setActiveDecorationId}
+        onChangeDecorationLayer={(id, action) =>
+          setPlaced((current) => reorderDecorations(current, id, action))
+        }
+        onToggleDecorationCoversFish={(id) =>
+          setPlaced((current) =>
+            current.map((item) =>
+              item.id === id ? { ...item, coversFish: !item.coversFish } : item,
+            ),
+          )
+        }
       />
       <section className="card admin-aquarium-controls">
         <h2>Añadir peces</h2>

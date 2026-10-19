@@ -54,6 +54,8 @@ export default async function AdminAquariumPage({
           xPct: item.xPct,
           yPct: item.yPct,
           scale: item.scale,
+          layer: item.layer,
+          coversFish: item.coversFish,
         }))}
       />
     </>

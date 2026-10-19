@@ -560,21 +560,46 @@ h2 {
 .aquarium-decoration.editable:active {
   cursor: grabbing;
 }
-.aquarium-decoration > button {
-  position: absolute;
-  top: -8px;
-  right: -8px;
+.aquarium-decoration-details {
   display: grid;
-  width: 25px;
-  height: 25px;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: #fff;
-  color: #7c2d2d;
-  box-shadow: 0 2px 8px #173a3340;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: min(390px, calc(100% - 28px));
+}
+.aquarium-layer-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.aquarium-layer-controls button {
+  min-height: 38px;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #b8ccbd;
+  border-radius: 9px;
+  background: #f6faf5;
+  color: var(--ink);
+  font-weight: 750;
   cursor: pointer;
+}
+.aquarium-cover-fish-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+.aquarium-cover-fish-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--leaf);
+}
+.aquarium-edit-selection {
+  grid-column: 1 / -1;
+  gap: 10px;
+}
+.aquarium-fish-details .button.danger {
+  border-color: #d6a5a0;
+  background: #fff1ef;
+  color: #8b3028;
 }
 .aquarium-decoration-selector {
   padding: 1.25rem;

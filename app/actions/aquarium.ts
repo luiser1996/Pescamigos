@@ -29,8 +29,14 @@ export async function saveAquariumAction(data: FormData) {
       RedirectType.replace,
     );
 
-  let placements: { id: string; xPct: number; yPct: number; scale: number }[] =
-    [];
+  let placements: {
+    id: string;
+    xPct: number;
+    yPct: number;
+    scale: number;
+    layer: number;
+    coversFish: boolean;
+  }[] = [];
   try {
     const raw = JSON.parse(String(data.get("decorationPlacements") ?? "[]"));
     if (Array.isArray(raw))
@@ -41,6 +47,11 @@ export async function saveAquariumAction(data: FormData) {
           xPct: Math.max(1, Math.min(99, Number(item.xPct))),
           yPct: Math.max(1, Math.min(97, Number(item.yPct))),
           scale: Math.max(0.5, Math.min(2, Number(item.scale) || 1)),
+          layer: Math.max(
+            -1000,
+            Math.min(1000, Math.trunc(Number(item.layer) || 0)),
+          ),
+          coversFish: item.coversFish === true,
         }))
         .filter(
           (item) =>
@@ -54,7 +65,10 @@ export async function saveAquariumAction(data: FormData) {
     select: { id: true },
   });
   const allowedDecorationIds = new Set(ownedDecorations.map((item) => item.id));
-  placements = placements.filter((item) => allowedDecorationIds.has(item.id));
+  placements = placements
+    .filter((item) => allowedDecorationIds.has(item.id))
+    .sort((a, b) => a.layer - b.layer || a.id.localeCompare(b.id))
+    .map((item, layer) => ({ ...item, layer }));
 
   await prisma.$transaction([
     prisma.aquariumFish.deleteMany({ where: { userId: user.id } }),
@@ -63,12 +77,18 @@ export async function saveAquariumAction(data: FormData) {
     }),
     prisma.userDecoration.updateMany({
       where: { userId: user.id },
-      data: { xPct: null, yPct: null },
+      data: { xPct: null, yPct: null, layer: 0, coversFish: false },
     }),
     ...placements.map((item) =>
       prisma.userDecoration.update({
         where: { id: item.id },
-        data: { xPct: item.xPct, yPct: item.yPct, scale: item.scale },
+        data: {
+          xPct: item.xPct,
+          yPct: item.yPct,
+          scale: item.scale,
+          layer: item.layer,
+          coversFish: item.coversFish,
+        },
       }),
     ),
   ]);
