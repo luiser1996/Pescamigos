@@ -107,27 +107,27 @@ model LoginThrottle {
 }
 
 model Species {
-  id                    String              @id @default(cuid())
-  slug                  String              @unique
+  id                    String             @id @default(cuid())
+  slug                  String             @unique
   commonName            String
   scientificName        String
-  alternateNames        String[]            @default([])
+  alternateNames        String[]           @default([])
   waterType             WaterType
   description           String?
   curiosities           String?
   habitat               String?
   granadaDistribution   String?
-  usualSizeCm           Decimal?            @db.Decimal(7, 2)
-  documentedMaxSizeCm   Decimal?            @db.Decimal(7, 2)
-  usualWeightG          Decimal?            @db.Decimal(10, 2)
-  activeMonths          Int[]               @default([])
-  activityTimes         String[]            @default([])
+  usualSizeCm           Decimal?           @db.Decimal(7, 2)
+  documentedMaxSizeCm   Decimal?           @db.Decimal(7, 2)
+  usualWeightG          Decimal?           @db.Decimal(10, 2)
+  activeMonths          Int[]              @default([])
+  activityTimes         String[]           @default([])
   usualDepth            String?
   difficulty            Int?
-  rarity                Rarity              @default(COMMON)
-  aquariumBehavior      AquariumBehavior    @default(FREE_SWIMMER)
-  techniques            String[]            @default([])
-  baits                 String[]            @default([])
+  rarity                Rarity             @default(COMMON)
+  aquariumBehavior      AquariumBehavior   @default(FREE_SWIMMER)
+  techniques            String[]           @default([])
+  baits                 String[]           @default([])
   conservationStatus    String?
   legalStatus           String?
   closedSeasonNotes     String?
@@ -135,18 +135,17 @@ model Species {
   biologicalSeasonNotes String?
   illustrationPath      String?
   silhouettePath        String?
-  verificationStatus    VerificationStatus  @default(PENDING)
+  verificationStatus    VerificationStatus @default(PENDING)
   reviewedAt            DateTime?
   archivedAt            DateTime?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
   sources               SpeciesSource[]
   catches               Catch[]
-  catalogImageId        String?             @unique
-  detailImageId         String?             @unique
-  catalogImage          StoredImage?        @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
-  detailImage           StoredImage?        @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
-  adminAquariumFish     AdminAquariumFish[]
+  catalogImageId        String?            @unique
+  detailImageId         String?            @unique
+  catalogImage          StoredImage?       @relation("SpeciesCatalogImage", fields: [catalogImageId], references: [id], onDelete: SetNull)
+  detailImage           StoredImage?       @relation("SpeciesDetailImage", fields: [detailImageId], references: [id], onDelete: SetNull)
 
   @@index([waterType, archivedAt])
   @@index([commonName])
@@ -253,30 +252,6 @@ model UserDecoration {
 
   @@index([userId, acquiredAt])
   @@index([userId, rarity])
-}
-
-model AdminAquariumFish {
-  id        String   @id @default(cuid())
-  speciesId String
-  lengthCm  Float
-  createdAt DateTime @default(now())
-  species   Species  @relation(fields: [speciesId], references: [id], onDelete: Cascade)
-
-  @@index([createdAt])
-}
-
-model AdminAquariumDecoration {
-  id         String   @id @default(cuid())
-  slug       String
-  rarity     Rarity
-  xPct       Float
-  yPct       Float
-  scale      Float    @default(1)
-  layer      Int      @default(0)
-  coversFish Boolean  @default(false)
-  createdAt  DateTime @default(now())
-
-  @@index([createdAt])
 }
 
 model AquariumFish {

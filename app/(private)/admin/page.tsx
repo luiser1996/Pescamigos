@@ -85,14 +85,14 @@ export default async function Admin({
       )}
       <section className="card admin-aquarium-entry">
         <div>
-          <h2>Pecera de pruebas</h2>
+          <h2>Simulador de forja</h2>
           <p>
-            Pecera común para que los administradores prueben cualquier pez y
-            decoración sin tener que obtenerlos.
+            Prueba la forja y el desmantelado con un inventario ampliado basado
+            en los objetos de Luis, sin modificar su cuenta.
           </p>
         </div>
-        <Link className="button" href="/admin/pecera">
-          Abrir pecera de pruebas
+        <Link className="button" href="/admin/crafteo">
+          Abrir simulador
         </Link>
       </section>
       <div

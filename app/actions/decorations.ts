@@ -16,6 +16,13 @@ export type ChestState = {
   error?: string;
 };
 
+export type CraftState = {
+  nonce?: string;
+  rewards?: string[];
+  kind?: "craft" | "dismantle";
+  error?: string;
+};
+
 function randomRarity(): Rarity {
   const roll = randomInt(100);
   return roll < 50
@@ -73,19 +80,22 @@ export async function openChestAction(
   };
 }
 
-export async function craftDecorationsAction(data: FormData) {
+export async function craftDecorationsAction(
+  _state: CraftState,
+  data: FormData,
+): Promise<CraftState> {
   const user = await requireUser();
   const ids = [...new Set(data.getAll("decorationIds").map(String))];
-  if (ids.length !== 5) return;
-  await prisma.$transaction(async (tx) => {
+  if (ids.length !== 5) return { error: "Selecciona exactamente 5 objetos" };
+  const reward = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
     const owned = await tx.userDecoration.findMany({
       where: { id: { in: ids }, userId: user.id },
     });
     if (owned.length !== 5 || new Set(owned.map((x) => x.rarity)).size !== 1)
-      return;
+      return null;
     const index = rarityOrder.indexOf(owned[0].rarity);
-    if (index < 0 || index >= rarityOrder.length - 1) return;
+    if (index < 0 || index >= rarityOrder.length - 1) return null;
     const reward = randomDecoration(rarityOrder[index + 1]);
     await tx.userDecoration.deleteMany({
       where: { id: { in: ids }, userId: user.id },
@@ -98,22 +108,33 @@ export async function craftDecorationsAction(data: FormData) {
         source: "CRAFT",
       },
     });
+    return reward;
   });
+  if (!reward)
+    return { error: "Los objetos seleccionados ya no están disponibles" };
   revalidatePath("/cofres/crafteo");
   revalidatePath(`/pescadores/${user.username}/pecera`);
+  return {
+    nonce: crypto.randomUUID(),
+    rewards: [reward.slug],
+    kind: "craft",
+  };
 }
 
-export async function dismantleDecorationAction(data: FormData) {
+export async function dismantleDecorationAction(
+  _state: CraftState,
+  data: FormData,
+): Promise<CraftState> {
   const user = await requireUser();
   const id = String(data.get("decorationId") ?? "");
-  await prisma.$transaction(async (tx) => {
+  const rewards = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${user.id} FOR UPDATE`;
     const owned = await tx.userDecoration.findFirst({
       where: { id, userId: user.id },
     });
-    if (!owned) return;
+    if (!owned) return null;
     const index = rarityOrder.indexOf(owned.rarity);
-    if (index <= 0) return;
+    if (index <= 0) return null;
     const rewards = Array.from({ length: 3 }, () =>
       randomDecoration(rarityOrder[index - 1]),
     );
@@ -126,7 +147,15 @@ export async function dismantleDecorationAction(data: FormData) {
         source: "DISMANTLE" as const,
       })),
     });
+    return rewards;
   });
+  if (!rewards)
+    return { error: "El objeto seleccionado ya no está disponible" };
   revalidatePath("/cofres/crafteo");
   revalidatePath(`/pescadores/${user.username}/pecera`);
+  return {
+    nonce: crypto.randomUUID(),
+    rewards: rewards.map((reward) => reward.slug),
+    kind: "dismantle",
+  };
 }
